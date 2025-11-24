@@ -5,7 +5,7 @@ export async function api(path, opts = {}) {
   headers['Content-Type'] = 'application/json';
 
   const url = opts.method === 'GET' ? `${API_BASE}?path=${path}` : API_BASE;
-  const res = await fetch(url, { ...opts, headers });
+  const res = await fetch(url, { ...opts, headers, mode: 'no-cors' });
 
   const body = await res.json().catch(() => null);
   if (!res.ok) throw body || { message: 'network error' };
