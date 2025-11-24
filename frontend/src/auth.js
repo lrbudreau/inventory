@@ -1,20 +1,23 @@
-const API_BASE = "https://script.google.com/macros/s/AKfycbyW6n3XNMTiHyBvV84ZVumIy0KH3d4ZqJ8kuFrj7u5nqBxM7q6VPWzUsTKRdG-oOylb/exec";
+const API_BASE =
+  "https://script.google.com/macros/s/AKfycbyDcj9U3AmF-DqrtAy8uULykAhafUnts3xH5GBAsN83LEjc8FYB2T4KAvHreUPaVsmD/exec";
 
-export async function api(path, opts = {}) {
-  const headers = opts.headers || {};
+export async function apiGet(resource, params = {}) {
+  const url = new URL(API_BASE);
+  url.searchParams.set("resource", resource);
+  for (const k in params) url.searchParams.set(k, params[k]);
 
-  // ONLY add JSON header for POST
-  if (opts.method === 'POST') {
-    headers['Content-Type'] = 'application/json';
-  }
+  const res = await fetch(url.toString(), { method: "GET" });
+  const body = await res.json();
+  return body;
+}
 
-  const url = opts.method === 'GET'
-    ? `${API_BASE}?path=${path}`
-    : API_BASE;
+export async function apiPost(payload) {
+  const res = await fetch(API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 
-  const res = await fetch(url, { ...opts, headers });
-
-  const body = await res.json().catch(() => null);
-  if (!res.ok) throw body || { message: 'network error' };
+  const body = await res.json();
   return body;
 }
