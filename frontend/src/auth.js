@@ -1,5 +1,5 @@
 const API_BASE =
-  "https://script.google.com/macros/s/AKfycbz0myLl2DgF_HsxW1_4TOqEBCRjyIAACjaDT4otqsf10TGCbVPDZnJvDvqmnJrX14Kr/exec";
+  "https://script.google.com/macros/s/AKfycbwBTT16NqFMoZyEVqWNBIBJXfra-uq943lIHXIrthJJ3AF8GQc9VvriQc8ojgSEwA4c/exec";
 
 export async function apiGet(resource, params = {}) {
   const url = new URL(API_BASE);
