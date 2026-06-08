@@ -953,3 +953,69 @@ textarea { resize: vertical; }
   text-align: center;
   font-size: 0.95rem;
 }
+
+/* ===================== BARCODE SCAN ===================== */
+.btn-scan {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-scan:hover { border-color: var(--accent); color: var(--accent); }
+.btn-scan.active { background: rgba(245,158,11,0.15); border-color: var(--accent); color: var(--accent); }
+
+.scan-active {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(245,158,11,0.2);
+}
+
+/* ===================== REORDER ===================== */
+.reorder-vendor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.reorder-vendor-name {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.reorder-vendor-contact {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+/* ===================== PRINT BUTTON ===================== */
+.btn-print {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-print:hover { border-color: var(--accent2); color: var(--accent2); }
