@@ -8,10 +8,10 @@ import Companies from "./components/Companies";
 
 const NAV = [
   { id: "dashboard", label: "Dashboard",  icon: "◈" },
-  { id: "orders",    label: "Orders",     icon: "📋" },
+  { id: "orders",    label: "Orders",     icon: "▦" },
   { id: "parts",     label: "Parts",      icon: "⬡" },
-  { id: "build",     label: "Products",      icon: "⚙" },
-  { id: "companies", label: "Companies",  icon: "🏢" },
+  { id: "build",     label: "Products",   icon: "⚙" },
+  { id: "companies", label: "Companies",  icon: "◻" },
 ];
 
 export default function App() {
