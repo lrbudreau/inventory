@@ -89,15 +89,7 @@ export default function Orders() {
     }
 
     const newBuilt = item.built + 1;
-    const res = await apiPost({
-      resource: "orderProducts/buildFor",
-      data: {
-        orderID: selected.id,
-        productId: item.productID,
-        count: 1,
-        newBuilt,
-      }
-    });
+    const res = await apiPost("orderProducts/buildFor", { orderID: selected.id, productId: item.productID, count: 1, newBuilt });
 
     if (res.success) {
       const updatedItems = orderItems.map(i =>
@@ -148,13 +140,13 @@ export default function Orders() {
     e.preventDefault();
     setSaving(true);
     if (editingOrder) {
-      await apiPost({ resource: "orders/update", data: { id: editingOrder.id, orderNumber, companyID: companyName, status: editingOrder.status } });
+      await apiPost("orders/update", { id: editingOrder.id, orderNumber, companyID: companyName, status: editingOrder.status });
     } else {
-      const res = await apiPost({ resource: "orders", data: { orderNumber, companyID: companyName } });
+      const res = await apiPost("orders/create", { orderNumber, companyID: companyName });
       const newOrderId = res.id;
       for (const line of productLines) {
         if (line.productID) {
-          await apiPost({ resource: "orderProducts", data: { orderID: newOrderId, productID: line.productID, quantity: Number(line.quantity) } });
+          await apiPost("orderProducts/create", { orderID: newOrderId, productID: line.productID, quantity: Number(line.quantity) });
         }
       }
     }
@@ -165,7 +157,7 @@ export default function Orders() {
 
   async function handleDeleteOrder(order) {
     setSaving(true);
-    await apiPost({ resource: "orders/delete", data: { id: order.id } });
+    await apiPost("orders/delete", { id: order.id });
     setConfirmDelete(null);
     if (selected?.id === order.id) { setSelected(null); setView("list"); }
     await load();
@@ -173,7 +165,7 @@ export default function Orders() {
   }
 
   async function handleStatusChange(newStatus) {
-    await apiPost({ resource: "orders/update", data: { id: selected.id, orderNumber: selected.orderNumber, companyID: selected.companyID, status: newStatus } });
+    await apiPost("orders/update", { id: selected.id, orderNumber: selected.orderNumber, companyID: selected.companyID, status: newStatus });
     setSelected({ ...selected, status: newStatus });
     setOrders(orders.map(o => o.id == selected.id ? { ...o, status: newStatus } : o));
   }
