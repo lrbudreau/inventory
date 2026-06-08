@@ -1,27 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
 
 export default function Parts({ readOnly = false }) {
   const [parts, setParts] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingPart, setEditingPart] = useState(null);
-  const [form, setForm] = useState({ name:"", barcode:"", quantity:0, min:0 });
+  const [form, setForm] = useState({ name:"", barcode:"", quantity:0, min:0, vendorID:"", cost:0 });
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [scanMode, setScanMode] = useState(false);
+  const searchRef = useRef(null);
 
   async function load() {
-    const p = await apiGet("parts");
+    const [p, v] = await Promise.all([apiGet("parts"), apiGet("vendors")]);
     setParts(Array.isArray(p) ? p : []);
+    setVendors(Array.isArray(v) ? v : []);
     setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
 
-  function startAdd() { setEditingPart(null); setForm({ name:"", barcode:"", quantity:0, min:0 }); setShowForm(true); }
-  function startEdit(part) { setEditingPart(part); setForm({ name:part.name, barcode:part.barcode||"", quantity:part.quantity, min:part.min||0 }); setShowForm(true); }
+  // Auto-focus search when scan mode enabled
+  useEffect(() => {
+    if (scanMode && searchRef.current) searchRef.current.focus();
+  }, [scanMode]);
+
+  function startAdd() { setEditingPart(null); setForm({ name:"", barcode:"", quantity:0, min:0, vendorID:"", cost:0 }); setShowForm(true); }
+  function startEdit(part) {
+    setEditingPart(part);
+    setForm({ name:part.name, barcode:part.barcode||"", quantity:part.quantity, min:part.min||0, vendorID:part.vendorID||"", cost:part.cost||0 });
+    setShowForm(true);
+  }
   function cancelForm() { setShowForm(false); setEditingPart(null); }
 
   async function handleSave(e) {
@@ -46,6 +59,11 @@ export default function Parts({ readOnly = false }) {
     setSaving(false);
   }
 
+  function getVendorName(id) {
+    const v = vendors.find(v => v.id == id);
+    return v ? v.name : null;
+  }
+
   function stockStatus(p) {
     if (p.quantity === 0) return "danger";
     if (p.min > 0 && p.quantity <= p.min) return "warn";
@@ -63,9 +81,8 @@ export default function Parts({ readOnly = false }) {
     (p.barcode && p.barcode.includes(search))
   );
 
-  // Sort: low/out stock first
   const sorted = [...filtered].sort((a, b) => {
-    const order = { danger: 0, warn: 1, ok: 2 };
+    const order = { danger:0, warn:1, ok:2 };
     return order[stockStatus(a)] - order[stockStatus(b)];
   });
 
@@ -73,11 +90,27 @@ export default function Parts({ readOnly = false }) {
     <div className="page">
       <div className="page-header">
         <h1>Parts</h1>
-        {!readOnly && <button className="btn-primary" onClick={startAdd}>+ Add</button>}
+        <div style={{display:"flex", gap:8}}>
+          <button
+            className={`btn-scan ${scanMode ? "active" : ""}`}
+            onClick={() => { setScanMode(!scanMode); setSearch(""); }}
+            title="Barcode scan mode"
+          >
+            ▣ Scan
+          </button>
+          {!readOnly && <button className="btn-primary" onClick={startAdd}>+ Add</button>}
+        </div>
       </div>
 
       <div className="search-bar">
-        <input className="search-input full-width" placeholder="Search parts…" value={search} onChange={e => setSearch(e.target.value)} />
+        <input
+          ref={searchRef}
+          className={`search-input full-width ${scanMode ? "scan-active" : ""}`}
+          placeholder={scanMode ? "Scan barcode now…" : "Search parts…"}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          autoFocus={scanMode}
+        />
       </div>
 
       {showForm && (
@@ -88,23 +121,21 @@ export default function Parts({ readOnly = false }) {
               <button className="modal-close" onClick={cancelForm}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSave} className="inline-form">
-              <div className="field">
-                <label>Part Name</label>
-                <input value={form.name} onChange={e => setForm({...form,name:e.target.value})} placeholder="e.g. Steel Bracket" required />
-              </div>
-              <div className="field">
-                <label>Barcode (optional)</label>
-                <input value={form.barcode} onChange={e => setForm({...form,barcode:e.target.value})} placeholder="e.g. 123456789" />
+              <div className="field"><label>Part Name</label><input value={form.name} onChange={e => setForm({...form,name:e.target.value})} placeholder="e.g. Steel Bracket" required /></div>
+              <div className="field"><label>Barcode (optional)</label><input value={form.barcode} onChange={e => setForm({...form,barcode:e.target.value})} placeholder="e.g. 123456789" /></div>
+              <div className="field-row">
+                <div className="field"><label>Quantity</label><input type="number" min="0" value={form.quantity} onChange={e => setForm({...form,quantity:Number(e.target.value)})} /></div>
+                <div className="field"><label>Min Stock</label><input type="number" min="0" value={form.min} onChange={e => setForm({...form,min:Number(e.target.value)})} placeholder="0 = no alert" /></div>
               </div>
               <div className="field-row">
-                <div className="field">
-                  <label>Quantity</label>
-                  <input type="number" min="0" value={form.quantity} onChange={e => setForm({...form,quantity:Number(e.target.value)})} />
-                </div>
-                <div className="field">
-                  <label>Min Stock</label>
-                  <input type="number" min="0" value={form.min} onChange={e => setForm({...form,min:Number(e.target.value)})} placeholder="0 = no alert" />
-                </div>
+                <div className="field"><label>Cost per unit ($)</label><input type="number" min="0" step="0.01" value={form.cost} onChange={e => setForm({...form,cost:Number(e.target.value)})} placeholder="0.00" /></div>
+              </div>
+              <div className="field">
+                <label>Vendor</label>
+                <select value={form.vendorID} onChange={e => setForm({...form,vendorID:e.target.value})}>
+                  <option value="">No vendor assigned</option>
+                  {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                </select>
               </div>
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={cancelForm}>Cancel</button>
@@ -136,7 +167,8 @@ export default function Parts({ readOnly = false }) {
                 <div className="item-main">
                   <span className="item-name">{p.name}</span>
                   <span className="item-sub">
-                    {p.barcode ? `${p.barcode} · ` : ""}
+                    {p.cost > 0 ? `$${p.cost.toFixed(2)}/unit · ` : ""}
+                    {getVendorName(p.vendorID) ? `${getVendorName(p.vendorID)} · ` : ""}
                     {p.min > 0 ? `Min: ${p.min}` : "No min set"}
                   </span>
                 </div>
@@ -152,7 +184,11 @@ export default function Parts({ readOnly = false }) {
                 </div>
               </li>
             ))}
-            {sorted.length === 0 && <li className="empty pad">No parts found.</li>}
+            {sorted.length === 0 && (
+              <li className="empty pad">
+                {scanMode ? "No part found with that barcode." : "No parts found."}
+              </li>
+            )}
           </ul>
         )}
       </div>
