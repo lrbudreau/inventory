@@ -31,7 +31,7 @@ export default function Build() {
     setSelected(product);
     setResult(null);
     setCount(1);
-    const pp = await apiGet("productParts", { id: product.id });
+    const pp = await apiGet("productParts", { productID: product.id });
     setProductParts(Array.isArray(pp) ? pp : []);
     setView("build");
   }
@@ -60,7 +60,7 @@ export default function Build() {
     if (res.success) {
       setResult({ ok: true, message: `Built ${count}x ${selected.name}!` });
       await load();
-      const pp = await apiGet("productParts", { id: selected.id });
+      const pp = await apiGet("productParts", { productID: selected.id });
       setProductParts(Array.isArray(pp) ? pp : []);
     } else {
       setResult({ ok: false, message: "Build failed. Check inventory." });
