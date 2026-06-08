@@ -20,30 +20,17 @@ export default function Parts() {
 
   useEffect(() => { load(); }, []);
 
-  function startAdd() {
-    setEditingPart(null);
-    setForm({ name: "", barcode: "", quantity: 0 });
-    setShowForm(true);
-  }
-
-  function startEdit(part) {
-    setEditingPart(part);
-    setForm({ name: part.name, barcode: part.barcode || "", quantity: part.quantity });
-    setShowForm(true);
-  }
-
-  function cancelForm() {
-    setShowForm(false);
-    setEditingPart(null);
-  }
+  function startAdd() { setEditingPart(null); setForm({ name:"", barcode:"", quantity:0 }); setShowForm(true); }
+  function startEdit(part) { setEditingPart(part); setForm({ name:part.name, barcode:part.barcode||"", quantity:part.quantity }); setShowForm(true); }
+  function cancelForm() { setShowForm(false); setEditingPart(null); }
 
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
     if (editingPart) {
-      await apiPost({ resource: "parts/update", data: { id: editingPart.id, ...form } });
+      await apiPost("parts/update", { id: editingPart.id, ...form });
     } else {
-      await apiPost({ resource: "parts", data: form });
+      await apiPost("parts/create", form);
     }
     setShowForm(false);
     setEditingPart(null);
@@ -53,7 +40,7 @@ export default function Parts() {
 
   async function handleDelete(part) {
     setSaving(true);
-    await apiPost({ resource: "parts/delete", data: { id: part.id } });
+    await apiPost("parts/delete", { id: part.id });
     setConfirmDelete(null);
     await load();
     setSaving(false);
@@ -72,12 +59,7 @@ export default function Parts() {
       </div>
 
       <div className="search-bar">
-        <input
-          className="search-input full-width"
-          placeholder="Search parts…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <input className="search-input full-width" placeholder="Search parts…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {showForm && (
@@ -88,18 +70,9 @@ export default function Parts() {
               <button className="modal-close" onClick={cancelForm}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSave} className="inline-form">
-              <div className="field">
-                <label>Part Name</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Steel Bracket" required />
-              </div>
-              <div className="field">
-                <label>Barcode (optional)</label>
-                <input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="e.g. 123456789" />
-              </div>
-              <div className="field">
-                <label>Quantity</label>
-                <input type="number" min="0" value={form.quantity} onChange={e => setForm({ ...form, quantity: Number(e.target.value) })} />
-              </div>
+              <div className="field"><label>Part Name</label><input value={form.name} onChange={e => setForm({...form,name:e.target.value})} placeholder="e.g. Steel Bracket" required /></div>
+              <div className="field"><label>Barcode (optional)</label><input value={form.barcode} onChange={e => setForm({...form,barcode:e.target.value})} placeholder="e.g. 123456789" /></div>
+              <div className="field"><label>Quantity</label><input type="number" min="0" value={form.quantity} onChange={e => setForm({...form,quantity:Number(e.target.value)})} /></div>
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={cancelForm}>Cancel</button>
                 <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
@@ -113,7 +86,7 @@ export default function Parts() {
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
             <h2>Delete Part?</h2>
-            <p className="confirm-text">Are you sure you want to delete <strong>{confirmDelete.name}</strong>? This cannot be undone.</p>
+            <p className="confirm-text">Delete <strong>{confirmDelete.name}</strong>? This cannot be undone.</p>
             <div className="form-actions">
               <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>Cancel</button>
               <button className="btn-danger" onClick={() => handleDelete(confirmDelete)} disabled={saving}>{saving ? "Deleting…" : "Delete"}</button>
@@ -123,9 +96,7 @@ export default function Parts() {
       )}
 
       <div className="card no-pad">
-        {loading ? (
-          <p className="loading pad">Loading parts…</p>
-        ) : (
+        {loading ? <p className="loading pad">Loading parts…</p> : (
           <ul className="item-list">
             {filtered.map(p => (
               <li key={p.id} className="item-row">
@@ -134,9 +105,7 @@ export default function Parts() {
                   {p.barcode && <span className="item-sub">{p.barcode}</span>}
                 </div>
                 <div className="item-right">
-                  <span className={`qty-badge ${p.quantity === 0 ? "danger" : p.quantity < 20 ? "warn" : "ok"}`}>
-                    {p.quantity}
-                  </span>
+                  <span className={`qty-badge ${p.quantity === 0 ? "danger" : p.quantity < 20 ? "warn" : "ok"}`}>{p.quantity}</span>
                   <button className="btn-icon" onClick={() => startEdit(p)}><EditIcon /></button>
                   <button className="btn-icon" onClick={() => setConfirmDelete(p)}><DeleteIcon /></button>
                 </div>
