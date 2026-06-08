@@ -33,7 +33,7 @@ export default function App() {
 
   if (!user) return <Login onLogin={(u) => { setUser(u); setPage("dashboard"); }} />;
 
-  const isAdmin = user.roleID === "admin";
+  const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
 
   // Redirect if basicUser tries to access admin page
@@ -65,7 +65,7 @@ export default function App() {
             <span className="user-avatar">{user.username?.[0]?.toUpperCase()}</span>
             <div>
               <div className="user-name">{user.username}</div>
-              <div className="user-role">{isAdmin ? "Admin" : "Basic User"}</div>
+              <div className="user-role">{user.roleName === "admin" || user.roleID === "admin" ? "Admin" : "Basic User"}</div>
             </div>
           </div>
           <button className="btn-change-pw" onClick={() => setPage("password")}>Change Password</button>
