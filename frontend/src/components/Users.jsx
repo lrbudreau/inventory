@@ -8,7 +8,9 @@ export default function Users({ currentUser }) {
   const [showAdd, setShowAdd] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [resetUser, setResetUser] = useState(null);
+  const [approveUser, setApproveUser] = useState(null);
   const [newPassword, setNewPassword] = useState("");
+  const [approveRole, setApproveRole] = useState("basicUser");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ username:"", email:"", password:"", roleID:"basicUser" });
   const [msg, setMsg] = useState(null);
@@ -21,6 +23,11 @@ export default function Users({ currentUser }) {
 
   useEffect(() => { load(); }, []);
 
+  function showMsg(ok, text) {
+    setMsg({ ok, text });
+    setTimeout(() => setMsg(null), 3000);
+  }
+
   async function handleAdd(e) {
     e.preventDefault();
     setSaving(true);
@@ -28,17 +35,15 @@ export default function Users({ currentUser }) {
     if (res.success) {
       setShowAdd(false);
       setForm({ username:"", email:"", password:"", roleID:"basicUser" });
-      setMsg({ ok:true, text:"User created!" });
+      showMsg(true, "User created!");
       await load();
     } else {
-      setMsg({ ok:false, text: res.error || "Failed to create user." });
+      showMsg(false, res.error || "Failed to create user.");
     }
     setSaving(false);
-    setTimeout(() => setMsg(null), 3000);
   }
 
   async function handleDelete(user) {
-    if (user.id === currentUser.id) return;
     setSaving(true);
     await apiPost("users/delete", { id: user.id });
     setConfirmDelete(null);
@@ -51,24 +56,100 @@ export default function Users({ currentUser }) {
     setSaving(true);
     const res = await apiPost("users/resetPassword", { id: resetUser.id, newPassword });
     if (res.success) {
-      setMsg({ ok:true, text:`Password reset for ${resetUser.username}.` });
+      showMsg(true, `Password reset for ${resetUser.username}.`);
       setResetUser(null);
       setNewPassword("");
     } else {
-      setMsg({ ok:false, text: res.error || "Reset failed." });
+      showMsg(false, res.error || "Reset failed.");
     }
     setSaving(false);
-    setTimeout(() => setMsg(null), 3000);
+  }
+
+  async function handleApprove(e) {
+    e.preventDefault();
+    setSaving(true);
+    const res = await apiPost("users/approve", { id: approveUser.id, roleName: approveRole });
+    if (res.success) {
+      showMsg(true, `${approveUser.username} approved as ${approveRole}!`);
+      setApproveUser(null);
+    } else {
+      showMsg(false, res.error || "Approval failed.");
+    }
+    await load();
+    setSaving(false);
+  }
+
+  const pendingUsers = users.filter(u => u.roleID === "pending");
+  const activeUsers = users.filter(u => u.roleID !== "pending");
+
+  function roleBadge(roleID) {
+    if (roleID === "admin") return "badge-warn";
+    if (roleID === "pending") return "badge-danger";
+    return "badge-active";
+  }
+
+  function roleLabel(roleID) {
+    if (roleID === "admin") return "Admin";
+    if (roleID === "pending") return "Pending";
+    return "Basic";
   }
 
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Users</h1>
-        <button className="btn-primary" onClick={() => setShowAdd(true)}>+ Add User</button>
+        <h1>Users {pendingUsers.length > 0 && <span className="pending-count">{pendingUsers.length}</span>}</h1>
+        <button className="btn-primary" onClick={() => setShowAdd(true)}>+ Add</button>
       </div>
 
       {msg && <div className={`result-msg ${msg.ok ? "ok" : "fail"}`}>{msg.text}</div>}
+
+      {/* Pending Approvals */}
+      {pendingUsers.length > 0 && (
+        <div className="card alert-card no-pad" style={{marginBottom:14}}>
+          <div style={{padding:"12px 16px 4px"}}><h2 style={{color:"var(--warn)"}}>⏳ Pending Approval</h2></div>
+          <ul className="item-list">
+            {pendingUsers.map(u => (
+              <li key={u.id} className="item-row">
+                <div className="item-main">
+                  <span className="item-name">{u.username}</span>
+                  <span className="item-sub">{u.email || "No email"}</span>
+                </div>
+                <div className="item-right">
+                  <button className="btn-approve" onClick={() => { setApproveUser(u); setApproveRole("basicUser"); }}>Approve</button>
+                  <button className="btn-icon" onClick={() => setConfirmDelete(u)}><DeleteIcon /></button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Active Users */}
+      <div className="card no-pad">
+        {loading ? <p className="loading pad">Loading…</p> : (
+          <ul className="item-list">
+            {activeUsers.map(u => (
+              <li key={u.id} className="item-row">
+                <div className="item-main">
+                  <span className="item-name">
+                    {u.username}
+                    {u.id == currentUser.id && <span className="you-badge">you</span>}
+                  </span>
+                  <span className="item-sub">{u.email || "—"}</span>
+                </div>
+                <div className="item-right">
+                  <span className={`badge ${roleBadge(u.roleID)}`}>{roleLabel(u.roleID)}</span>
+                  <button className="btn-icon" onClick={() => { setResetUser(u); setNewPassword(""); }} title="Reset password">🔑</button>
+                  {u.id != currentUser.id && (
+                    <button className="btn-icon" onClick={() => setConfirmDelete(u)}><DeleteIcon /></button>
+                  )}
+                </div>
+              </li>
+            ))}
+            {activeUsers.length === 0 && <li className="empty pad">No active users.</li>}
+          </ul>
+        )}
+      </div>
 
       {/* Add User Modal */}
       {showAdd && (
@@ -79,18 +160,9 @@ export default function Users({ currentUser }) {
               <button className="modal-close" onClick={() => setShowAdd(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleAdd} className="inline-form">
-              <div className="field">
-                <label>Username</label>
-                <input value={form.username} onChange={e => setForm({...form,username:e.target.value})} placeholder="jsmith" required />
-              </div>
-              <div className="field">
-                <label>Email</label>
-                <input type="email" value={form.email} onChange={e => setForm({...form,email:e.target.value})} placeholder="jsmith@email.com" />
-              </div>
-              <div className="field">
-                <label>Password</label>
-                <input type="password" value={form.password} onChange={e => setForm({...form,password:e.target.value})} placeholder="Temporary password" required />
-              </div>
+              <div className="field"><label>Username</label><input value={form.username} onChange={e => setForm({...form,username:e.target.value})} placeholder="jsmith" required /></div>
+              <div className="field"><label>Email</label><input type="email" value={form.email} onChange={e => setForm({...form,email:e.target.value})} placeholder="jsmith@email.com" /></div>
+              <div className="field"><label>Password</label><input type="password" value={form.password} onChange={e => setForm({...form,password:e.target.value})} placeholder="Temporary password" required /></div>
               <div className="field">
                 <label>Role</label>
                 <select value={form.roleID} onChange={e => setForm({...form,roleID:e.target.value})}>
@@ -100,7 +172,33 @@ export default function Users({ currentUser }) {
               </div>
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowAdd(false)}>Cancel</button>
-                <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Create User"}</button>
+                <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Create"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Approve Modal */}
+      {approveUser && (
+        <div className="modal-overlay" onClick={() => setApproveUser(null)}>
+          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Approve User</h2>
+              <button className="modal-close" onClick={() => setApproveUser(null)}><CloseIcon /></button>
+            </div>
+            <form onSubmit={handleApprove} className="inline-form">
+              <p className="confirm-text">Approve <strong>{approveUser.username}</strong> and assign a role.</p>
+              <div className="field">
+                <label>Role</label>
+                <select value={approveRole} onChange={e => setApproveRole(e.target.value)}>
+                  <option value="basicUser">Basic User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={() => setApproveUser(null)}>Cancel</button>
+                <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Approving…" : "Approve"}</button>
               </div>
             </form>
           </div>
@@ -117,10 +215,7 @@ export default function Users({ currentUser }) {
             </div>
             <form onSubmit={handleReset} className="inline-form">
               <p className="confirm-text">Set a new password for <strong>{resetUser.username}</strong>.</p>
-              <div className="field">
-                <label>New Password</label>
-                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" required />
-              </div>
+              <div className="field"><label>New Password</label><input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" required /></div>
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setResetUser(null)}>Cancel</button>
                 <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Reset"}</button>
@@ -143,33 +238,6 @@ export default function Users({ currentUser }) {
           </div>
         </div>
       )}
-
-      <div className="card no-pad">
-        {loading ? <p className="loading pad">Loading…</p> : (
-          <ul className="item-list">
-            {users.map(u => (
-              <li key={u.id} className="item-row">
-                <div className="item-main">
-                  <span className="item-name">
-                    {u.username}
-                    {u.id === currentUser.id && <span className="you-badge">you</span>}
-                  </span>
-                  <span className="item-sub">{u.email || "—"}</span>
-                </div>
-                <div className="item-right">
-                  <span className={`badge ${u.roleID === "admin" ? "badge-warn" : "badge-active"}`}>
-                    {u.roleID === "admin" ? "Admin" : "Basic"}
-                  </span>
-                  <button className="btn-icon" onClick={() => setResetUser(u)} title="Reset password">🔑</button>
-                  {u.id !== currentUser.id && (
-                    <button className="btn-icon" onClick={() => setConfirmDelete(u)}><DeleteIcon /></button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
     </div>
   );
 }
