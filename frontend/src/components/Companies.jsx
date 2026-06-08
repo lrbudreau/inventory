@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
-import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
+import { EditIcon, DeleteIcon, CloseIcon, EmailIcon, PhoneIcon, AddressIcon, CompanyIcon } from "./Icons";
 
 const EMPTY_FORM = { name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" };
 
@@ -204,7 +204,7 @@ export default function Companies() {
       {view === "detail" && selected && (
         <div className="card company-detail">
           <div className="detail-row">
-            <span className="detail-icon">🏢</span>
+            <span className="detail-icon"><CompanyIcon /></span>
             <div>
               <div className="detail-label">Company</div>
               <div className="detail-value">{selected.name}</div>
@@ -212,7 +212,7 @@ export default function Companies() {
           </div>
           {selected.email && (
             <div className="detail-row">
-              <span className="detail-icon">✉️</span>
+              <span className="detail-icon"><EmailIcon /></span>
               <div>
                 <div className="detail-label">Email</div>
                 <a className="detail-value detail-link" href={`mailto:${selected.email}`}>{selected.email}</a>
@@ -221,7 +221,7 @@ export default function Companies() {
           )}
           {selected.phone && (
             <div className="detail-row">
-              <span className="detail-icon">📞</span>
+              <span className="detail-icon"><PhoneIcon /></span>
               <div>
                 <div className="detail-label">Phone</div>
                 <a className="detail-value detail-link" href={`tel:${selected.phone}`}>{selected.phone}</a>
@@ -230,7 +230,7 @@ export default function Companies() {
           )}
           {selected.address && (
             <div className="detail-row">
-              <span className="detail-icon">📍</span>
+              <span className="detail-icon"><AddressIcon /></span>
               <div>
                 <div className="detail-label">Address</div>
                 <div className="detail-value">
