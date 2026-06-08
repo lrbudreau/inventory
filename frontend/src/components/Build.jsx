@@ -12,10 +12,11 @@ export default function Build() {
   const [result, setResult] = useState(null);
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [newProduct, setNewProduct] = useState({ name: "", lines: "" });
+  const [productName, setProductName] = useState("");
+  const [partLines, setPartLines] = useState([{ partID: "", quantity: 1 }]);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [view, setView] = useState("list"); // "list" | "build"
+  const [view, setView] = useState("list");
 
   async function load() {
     const [pr, p] = await Promise.all([apiGet("products"), apiGet("parts")]);
@@ -46,7 +47,9 @@ export default function Build() {
   }
 
   function canBuild() {
-    return productParts.length > 0 && productParts.every(pp => getPartQty(pp.partID) >= pp.quantity * count);
+    return productParts.length > 0 && productParts.every(
+      pp => getPartQty(pp.partID) >= pp.quantity * count
+    );
   }
 
   async function handleBuild() {
@@ -65,29 +68,54 @@ export default function Build() {
     setBuilding(false);
   }
 
-  function startEdit(product) {
-    setEditingProduct(product);
-    setNewProduct({ name: product.name, lines: "" });
+  function openNewProduct() {
+    setEditingProduct(null);
+    setProductName("");
+    setPartLines([{ partID: "", quantity: 1 }]);
     setShowNewProduct(true);
+  }
+
+  function openEditProduct(product) {
+    setEditingProduct(product);
+    setProductName(product.name);
+    setPartLines([{ partID: "", quantity: 1 }]);
+    setShowNewProduct(true);
+  }
+
+  function addPartLine() {
+    setPartLines([...partLines, { partID: "", quantity: 1 }]);
+  }
+
+  function removePartLine(idx) {
+    setPartLines(partLines.filter((_, i) => i !== idx));
+  }
+
+  function updatePartLine(idx, field, value) {
+    const updated = partLines.map((line, i) =>
+      i === idx ? { ...line, [field]: value } : line
+    );
+    setPartLines(updated);
   }
 
   async function handleSaveProduct(e) {
     e.preventDefault();
     setSaving(true);
     if (editingProduct) {
-      await apiPost({ resource: "products/update", data: { id: editingProduct.id, name: newProduct.name } });
+      await apiPost({ resource: "products/update", data: { id: editingProduct.id, name: productName } });
     } else {
-      const productRes = await apiPost({ resource: "products", data: { name: newProduct.name } });
+      const productRes = await apiPost({ resource: "products", data: { name: productName } });
       const newId = productRes.id;
-      const lines = newProduct.lines.trim().split("\n").filter(Boolean);
-      for (const line of lines) {
-        const [partID, qty] = line.split(":").map(s => s.trim());
-        await apiPost({ resource: "productParts", data: { productID: newId, partID, quantity: Number(qty) } });
+      for (const line of partLines) {
+        if (line.partID) {
+          await apiPost({
+            resource: "productParts",
+            data: { productID: newId, partID: line.partID, quantity: Number(line.quantity) }
+          });
+        }
       }
     }
     setShowNewProduct(false);
     setEditingProduct(null);
-    setNewProduct({ name: "", lines: "" });
     await load();
     setSaving(false);
   }
@@ -113,10 +141,11 @@ export default function Build() {
           ) : "Products"}
         </h1>
         {view === "list" && (
-          <button className="btn-primary" onClick={() => { setEditingProduct(null); setNewProduct({ name: "", lines: "" }); setShowNewProduct(true); }}>+ Add</button>
+          <button className="btn-primary" onClick={openNewProduct}>+ Add</button>
         )}
       </div>
 
+      {/* New/Edit Product Modal */}
       {showNewProduct && (
         <div className="modal-overlay" onClick={() => setShowNewProduct(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -127,24 +156,60 @@ export default function Build() {
             <form onSubmit={handleSaveProduct} className="inline-form">
               <div className="field">
                 <label>Product Name</label>
-                <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="e.g. Steel Chair" required />
+                <input
+                  value={productName}
+                  onChange={e => setProductName(e.target.value)}
+                  placeholder="e.g. Steel Chair"
+                  required
+                />
               </div>
+
               {!editingProduct && (
                 <div className="field">
-                  <label>Parts (partID:quantity per line)</label>
-                  <textarea value={newProduct.lines} onChange={e => setNewProduct({ ...newProduct, lines: e.target.value })} placeholder={"1:4\n2:8\n3:1"} rows={4} />
-                  <small className="hint">Example: <code>1:4</code> = 4x of Part #1</small>
+                  <label>Parts Required</label>
+                  {partLines.map((line, idx) => (
+                    <div key={idx} className="part-line">
+                      <select
+                        value={line.partID}
+                        onChange={e => updatePartLine(idx, "partID", e.target.value)}
+                        required
+                      >
+                        <option value="">Select a part…</option>
+                        {parts.map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        min="1"
+                        value={line.quantity}
+                        onChange={e => updatePartLine(idx, "quantity", e.target.value)}
+                        className="qty-input"
+                        placeholder="Qty"
+                      />
+                      {partLines.length > 1 && (
+                        <button type="button" className="btn-icon" onClick={() => removePartLine(idx)}>✕</button>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" className="btn-add-part" onClick={addPartLine}>
+                    + Add Another Part
+                  </button>
                 </div>
               )}
+
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowNewProduct(false)}>Cancel</button>
-                <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+                <button className="btn-primary" type="submit" disabled={saving}>
+                  {saving ? "Saving…" : "Save"}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Delete Confirmation */}
       {confirmDelete && (
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
@@ -152,12 +217,15 @@ export default function Build() {
             <p className="confirm-text">Delete <strong>{confirmDelete.name}</strong>? This cannot be undone.</p>
             <div className="form-actions">
               <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>Cancel</button>
-              <button className="btn-danger" onClick={() => handleDeleteProduct(confirmDelete)} disabled={saving}>{saving ? "Deleting…" : "Delete"}</button>
+              <button className="btn-danger" onClick={() => handleDeleteProduct(confirmDelete)} disabled={saving}>
+                {saving ? "Deleting…" : "Delete"}
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Product List */}
       {view === "list" && (
         <div className="card no-pad">
           {loading ? <p className="loading pad">Loading…</p> : (
@@ -169,7 +237,7 @@ export default function Build() {
                     <span className="item-sub">Tap to build →</span>
                   </div>
                   <div className="item-right" onClick={e => e.stopPropagation()}>
-                    <button className="btn-icon" onClick={() => startEdit(p)}>✏️</button>
+                    <button className="btn-icon" onClick={() => openEditProduct(p)}>✏️</button>
                     <button className="btn-icon" onClick={() => setConfirmDelete(p)}>🗑️</button>
                   </div>
                 </li>
@@ -180,6 +248,7 @@ export default function Build() {
         </div>
       )}
 
+      {/* Build View */}
       {view === "build" && selected && (
         <div>
           <div className="card no-pad">
@@ -195,19 +264,26 @@ export default function Build() {
                       <span className="item-sub">Need {need} · Have {have}</span>
                     </div>
                     <div className="item-right">
-                      <span className={`qty-badge ${ok ? "ok" : "danger"}`}>{ok ? "✓" : `Short ${need - have}`}</span>
+                      <span className={`qty-badge ${ok ? "ok" : "danger"}`}>
+                        {ok ? "✓" : `Short ${need - have}`}
+                      </span>
                     </div>
                   </li>
                 );
               })}
-              {productParts.length === 0 && <li className="empty pad">No parts defined.</li>}
+              {productParts.length === 0 && <li className="empty pad">No parts defined for this product.</li>}
             </ul>
           </div>
 
           <div className="build-footer">
             <div className="field qty-field">
-              <label>Quantity</label>
-              <input type="number" min="1" value={count} onChange={e => setCount(Number(e.target.value))} />
+              <label>Qty to Build</label>
+              <input
+                type="number"
+                min="1"
+                value={count}
+                onChange={e => setCount(Number(e.target.value))}
+              />
             </div>
             <button
               className={`btn-build-mobile ${!canBuild() ? "disabled" : ""}`}
