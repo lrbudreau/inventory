@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
+import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
 
 export default function Build() {
   const [products, setProducts] = useState([]);
@@ -151,7 +152,7 @@ export default function Build() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingProduct ? "Edit Product" : "New Product"}</h2>
-              <button className="modal-close" onClick={() => setShowNewProduct(false)}>✕</button>
+              <button className="modal-close" onClick={() => setShowNewProduct(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSaveProduct} className="inline-form">
               <div className="field">
@@ -188,7 +189,7 @@ export default function Build() {
                         placeholder="Qty"
                       />
                       {partLines.length > 1 && (
-                        <button type="button" className="btn-icon" onClick={() => removePartLine(idx)}>✕</button>
+                        <button type="button" className="btn-icon" onClick={() => removePartLine(idx)}><CloseIcon /></button>
                       )}
                     </div>
                   ))}
@@ -239,8 +240,8 @@ export default function Build() {
                     </div>
                   </button>
                   <div className="item-right">
-                    <button className="btn-icon" onClick={() => openEditProduct(p)}>✏️</button>
-                    <button className="btn-icon" onClick={() => setConfirmDelete(p)}>🗑️</button>
+                    <button className="btn-icon" onClick={() => openEditProduct(p)}><EditIcon /></button>
+                    <button className="btn-icon" onClick={() => setConfirmDelete(p)}><DeleteIcon /></button>
                   </div>
                 </li>
               ))}
