@@ -24,7 +24,7 @@ export default function App() {
           <span className="brand-name">FabTrack</span>
         </div>
         <nav className="sidebar-nav">
-          {NAV.map((n) => (
+          {NAV.map(n => (
             <button
               key={n.id}
               className={`nav-item ${page === n.id ? "active" : ""}`}
@@ -45,6 +45,16 @@ export default function App() {
       </aside>
 
       <main className="main-content">
+        <div className="mobile-header">
+          <div className="mobile-brand">
+            <span>⚙</span>
+            <span>FabTrack</span>
+          </div>
+          <div className="mobile-user">
+            <span className="user-avatar" title={user.username}>{user.username?.[0]?.toUpperCase()}</span>
+            <button className="btn-logout" style={{width:"auto"}} onClick={() => setUser(null)}>Out</button>
+          </div>
+        </div>
         {page === "dashboard" && <Dashboard />}
         {page === "parts" && <Parts />}
         {page === "build" && <Build />}
