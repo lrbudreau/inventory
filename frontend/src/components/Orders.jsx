@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
+import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
 
 const STATUS_COLORS = {
   "Open":        "badge-active",
@@ -206,7 +207,7 @@ export default function Orders() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingOrder ? "Edit Order" : "New Order"}</h2>
-              <button className="modal-close" onClick={() => setShowForm(false)}>✕</button>
+              <button className="modal-close" onClick={() => setShowForm(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSaveOrder} className="inline-form">
               <div className="field">
@@ -242,7 +243,7 @@ export default function Orders() {
                         placeholder="Qty"
                       />
                       {productLines.length > 1 && (
-                        <button type="button" className="btn-icon" onClick={() => removeProductLine(idx)}>✕</button>
+                        <button type="button" className="btn-icon" onClick={() => removeProductLine(idx)}><CloseIcon /></button>
                       )}
                     </div>
                   ))}
@@ -291,8 +292,8 @@ export default function Orders() {
                   </button>
                   <div className="item-right">
                     <span className={`badge ${STATUS_COLORS[o.status] || "badge-active"}`}>{o.status || "Open"}</span>
-                    <button className="btn-icon" onClick={() => openEditOrder(o)}>✏️</button>
-                    <button className="btn-icon" onClick={() => setConfirmDelete(o)}>🗑️</button>
+                    <button className="btn-icon" onClick={() => openEditOrder(o)}><EditIcon /></button>
+                    <button className="btn-icon" onClick={() => setConfirmDelete(o)}><DeleteIcon /></button>
                   </div>
                 </li>
               ))}
