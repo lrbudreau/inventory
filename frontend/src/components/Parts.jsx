@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
 
-export default function Parts() {
+export default function Parts({ readOnly = false }) {
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -73,7 +73,7 @@ export default function Parts() {
     <div className="page">
       <div className="page-header">
         <h1>Parts</h1>
-        <button className="btn-primary" onClick={startAdd}>+ Add</button>
+        {!readOnly && <button className="btn-primary" onClick={startAdd}>+ Add</button>}
       </div>
 
       <div className="search-bar">
@@ -145,8 +145,10 @@ export default function Parts() {
                     <span className={`qty-badge ${stockStatus(p)}`}>{p.quantity}</span>
                     <span className={`stock-label ${stockStatus(p)}`}>{stockLabel(p)}</span>
                   </div>
-                  <button className="btn-icon" onClick={() => startEdit(p)}><EditIcon /></button>
-                  <button className="btn-icon" onClick={() => setConfirmDelete(p)}><DeleteIcon /></button>
+                  {!readOnly && <>
+                    <button className="btn-icon" onClick={() => startEdit(p)}><EditIcon /></button>
+                    <button className="btn-icon" onClick={() => setConfirmDelete(p)}><DeleteIcon /></button>
+                  </>}
                 </div>
               </li>
             ))}
