@@ -32,9 +32,14 @@ export default function Build() {
     setSelected(product);
     setResult(null);
     setCount(1);
-    const pp = await apiGet("productParts", { productID: product.id });
-    setProductParts(Array.isArray(pp) ? pp : []);
+    setProductParts([]);
     setView("build");
+    try {
+      const pp = await apiGet("productParts", { productID: product.id });
+      setProductParts(Array.isArray(pp) ? pp : []);
+    } catch(err) {
+      console.error("Failed to load product parts", err);
+    }
   }
 
   function getPartName(partId) {
