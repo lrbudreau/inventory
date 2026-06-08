@@ -231,12 +231,14 @@ export default function Build() {
           {loading ? <p className="loading pad">Loading…</p> : (
             <ul className="item-list">
               {products.map(p => (
-                <li key={p.id} className="item-row" onClick={() => selectProduct(p)}>
-                  <div className="item-main">
-                    <span className="item-name">{p.name}</span>
-                    <span className="item-sub">Tap to build →</span>
-                  </div>
-                  <div className="item-right" onClick={e => e.stopPropagation()}>
+                <li key={p.id} className="item-row">
+                  <button className="item-btn" onClick={() => selectProduct(p)}>
+                    <div className="item-main">
+                      <span className="item-name">{p.name}</span>
+                      <span className="item-sub">View parts &amp; build →</span>
+                    </div>
+                  </button>
+                  <div className="item-right">
                     <button className="btn-icon" onClick={() => openEditProduct(p)}>✏️</button>
                     <button className="btn-icon" onClick={() => setConfirmDelete(p)}>🗑️</button>
                   </div>
