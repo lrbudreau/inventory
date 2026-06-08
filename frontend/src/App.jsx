@@ -7,22 +7,39 @@ import Orders from "./components/Orders";
 import Companies from "./components/Companies";
 import Vendors from "./components/Vendors";
 import Purchases from "./components/Purchases";
+import Users from "./components/Users";
+import ChangePassword from "./components/ChangePassword";
 
-const NAV = [
-  { id: "dashboard", label: "Dashboard", icon: "◈" },
-  { id: "orders",    label: "Orders",    icon: "▦" },
-  { id: "parts",     label: "Parts",     icon: "⬡" },
-  { id: "build",     label: "Products",  icon: "⚙" },
-  { id: "purchases", label: "Restock",   icon: "↑" },
-  { id: "vendors",   label: "Vendors",   icon: "◫" },
-  { id: "companies", label: "Companies", icon: "◻" },
+const ADMIN_NAV = [
+  { id: "dashboard",  label: "Dashboard", icon: "◈" },
+  { id: "orders",     label: "Orders",    icon: "▦" },
+  { id: "parts",      label: "Parts",     icon: "⬡" },
+  { id: "build",      label: "Products",  icon: "⚙" },
+  { id: "purchases",  label: "Restock",   icon: "↑" },
+  { id: "vendors",    label: "Vendors",   icon: "◫" },
+  { id: "companies",  label: "Companies", icon: "◻" },
+  { id: "users",      label: "Users",     icon: "◉" },
+];
+
+const BASIC_NAV = [
+  { id: "dashboard",  label: "Dashboard", icon: "◈" },
+  { id: "orders",     label: "Orders",    icon: "▦" },
+  { id: "parts",      label: "Parts",     icon: "⬡" },
 ];
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("dashboard");
 
-  if (!user) return <Login onLogin={setUser} />;
+  if (!user) return <Login onLogin={(u) => { setUser(u); setPage("dashboard"); }} />;
+
+  const isAdmin = user.roleID === "admin";
+  const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
+
+  // Redirect if basicUser tries to access admin page
+  const safePage = (!isAdmin && !["dashboard","orders","parts","password"].includes(page))
+    ? "dashboard"
+    : page;
 
   return (
     <div className="app-shell">
@@ -32,10 +49,10 @@ export default function App() {
           <span className="brand-name">FabTrack</span>
         </div>
         <nav className="sidebar-nav">
-          {NAV.map(n => (
+          {nav.map(n => (
             <button
               key={n.id}
-              className={`nav-item ${page === n.id ? "active" : ""}`}
+              className={`nav-item ${safePage === n.id ? "active" : ""}`}
               onClick={() => setPage(n.id)}
             >
               <span className="nav-icon">{n.icon}</span>
@@ -46,9 +63,13 @@ export default function App() {
         <div className="sidebar-footer">
           <div className="user-info">
             <span className="user-avatar">{user.username?.[0]?.toUpperCase()}</span>
-            <span className="user-name">{user.username}</span>
+            <div>
+              <div className="user-name">{user.username}</div>
+              <div className="user-role">{isAdmin ? "Admin" : "Basic User"}</div>
+            </div>
           </div>
-          <button className="btn-logout" onClick={() => setUser(null)}>Sign Out</button>
+          <button className="btn-change-pw" onClick={() => setPage("password")}>Change Password</button>
+          <button className="btn-logout" onClick={() => { setUser(null); setPage("dashboard"); }}>Sign Out</button>
         </div>
       </aside>
 
@@ -59,17 +80,22 @@ export default function App() {
             <span>FabTrack</span>
           </div>
           <div className="mobile-user">
-            <span className="user-avatar">{user.username?.[0]?.toUpperCase()}</span>
-            <button className="btn-logout" style={{width:"auto"}} onClick={() => setUser(null)}>Out</button>
+            <span className="user-avatar" onClick={() => setPage("password")} title="Change password" style={{cursor:"pointer"}}>
+              {user.username?.[0]?.toUpperCase()}
+            </span>
+            <button className="btn-logout" style={{width:"auto"}} onClick={() => { setUser(null); setPage("dashboard"); }}>Out</button>
           </div>
         </div>
-        {page === "dashboard" && <Dashboard />}
-        {page === "orders"    && <Orders />}
-        {page === "parts"     && <Parts />}
-        {page === "build"     && <Build />}
-        {page === "purchases" && <Purchases />}
-        {page === "vendors"   && <Vendors />}
-        {page === "companies" && <Companies />}
+
+        {safePage === "dashboard"  && <Dashboard />}
+        {safePage === "orders"     && <Orders />}
+        {safePage === "parts"      && <Parts readOnly={!isAdmin} />}
+        {safePage === "build"      && isAdmin && <Build />}
+        {safePage === "purchases"  && isAdmin && <Purchases />}
+        {safePage === "vendors"    && isAdmin && <Vendors />}
+        {safePage === "companies"  && isAdmin && <Companies />}
+        {safePage === "users"      && isAdmin && <Users currentUser={user} />}
+        {safePage === "password"   && <ChangePassword currentUser={user} />}
       </main>
     </div>
   );
