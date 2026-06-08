@@ -62,7 +62,7 @@ export default function Build() {
     if (!canBuild()) return;
     setBuilding(true);
     setResult(null);
-    const res = await apiPost({ resource: "build", data: { productId: selected.id, count } });
+    const res = await apiPost("build", { productId: selected.id, count });
     if (res.success) {
       setResult({ ok: true, message: `Built ${count}x ${selected.name}!` });
       await load();
@@ -107,16 +107,13 @@ export default function Build() {
     e.preventDefault();
     setSaving(true);
     if (editingProduct) {
-      await apiPost({ resource: "products/update", data: { id: editingProduct.id, name: productName } });
+      await apiPost("products/update", { id: editingProduct.id, name: productName });
     } else {
-      const productRes = await apiPost({ resource: "products", data: { name: productName } });
+      const productRes = await apiPost("products/create", { name: productName });
       const newId = productRes.id;
       for (const line of partLines) {
         if (line.partID) {
-          await apiPost({
-            resource: "productParts",
-            data: { productID: newId, partID: line.partID, quantity: Number(line.quantity) }
-          });
+          await apiPost("productParts/create", { productID: newId, partID: line.partID, quantity: Number(line.quantity) });
         }
       }
     }
@@ -128,7 +125,7 @@ export default function Build() {
 
   async function handleDeleteProduct(product) {
     setSaving(true);
-    await apiPost({ resource: "products/delete", data: { id: product.id } });
+    await apiPost("products/delete", { id: product.id });
     setConfirmDelete(null);
     if (selected?.id === product.id) { setSelected(null); setView("list"); }
     await load();
