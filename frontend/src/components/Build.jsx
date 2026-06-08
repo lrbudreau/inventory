@@ -21,9 +21,30 @@ export default function Build() {
     setProducts(Array.isArray(pr) ? pr : []);
     setParts(Array.isArray(p) ? p : []);
     setLoading(false);
+    if (Array.isArray(pr) && Array.isArray(p)) loadEstimates(pr, p);
   }
 
   useEffect(() => { load(); }, []);
+
+  const [estimates, setEstimates] = useState({});
+
+  async function loadEstimates(productList, partsList) {
+    const results = {};
+    for (const product of productList) {
+      const pp = await apiGet("productParts", { productID: product.id });
+      if (Array.isArray(pp) && pp.length > 0) {
+        const max = Math.min(...pp.map(p => {
+          const part = partsList.find(pt => pt.id == p.partID);
+          if (!part || p.quantity === 0) return 0;
+          return Math.floor(part.quantity / p.quantity);
+        }));
+        results[product.id] = max;
+      } else {
+        results[product.id] = 0;
+      }
+    }
+    setEstimates(results);
+  }
 
   async function selectProduct(product) {
     setSelected(product);
@@ -219,7 +240,13 @@ export default function Build() {
                   <button className="item-btn" onClick={() => selectProduct(p)}>
                     <div className="item-main">
                       <span className="item-name">{p.name}</span>
-                      <span className="item-sub">View parts →</span>
+                      <span className="item-sub">
+                        {estimates[p.id] !== undefined
+                          ? estimates[p.id] === 0
+                            ? "⚠ Cannot build — parts low"
+                            : `Can build ${estimates[p.id]} now`
+                          : "View parts →"}
+                      </span>
                     </div>
                   </button>
                   <div className="item-right">
