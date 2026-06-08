@@ -438,11 +438,16 @@ export default function Orders({ currentUser }) {
                       {!done ? (
                         <div className="build-inline">
                           <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             min="1"
                             max={remaining}
                             value={buildCounts[item.productID] || 1}
-                            onChange={e => setBuildCounts({ ...buildCounts, [item.productID]: Math.min(Number(e.target.value), remaining) })}
+                            onChange={e => {
+                              const val = parseInt(e.target.value) || 1;
+                              setBuildCounts({ ...buildCounts, [item.productID]: Math.min(val, remaining) });
+                            }}
                             className="build-count-input"
                           />
                           <button
