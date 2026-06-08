@@ -171,10 +171,11 @@ textarea { resize: vertical; }
   font-size: 1.1rem;
   padding: 6px 8px;
   border-radius: var(--radius);
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
   line-height: 1;
+  color: var(--text-muted);
 }
-.btn-icon:hover { background: var(--bg3); }
+.btn-icon:hover { background: var(--bg3); color: var(--text); }
 
 .btn-back {
   background: transparent;
@@ -938,3 +939,17 @@ textarea { resize: vertical; }
   transition: background 0.15s;
 }
 .btn-approve:hover { background: rgba(34,197,94,0.25); }
+
+/* ===================== INLINE BUILD ===================== */
+.build-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.build-count-input {
+  width: 56px;
+  padding: 8px 8px;
+  text-align: center;
+  font-size: 0.95rem;
+}
