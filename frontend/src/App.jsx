@@ -5,13 +5,17 @@ import Parts from "./components/Parts";
 import Build from "./components/Build";
 import Orders from "./components/Orders";
 import Companies from "./components/Companies";
+import Vendors from "./components/Vendors";
+import Purchases from "./components/Purchases";
 
 const NAV = [
-  { id: "dashboard", label: "Dashboard",  icon: "◈" },
-  { id: "orders",    label: "Orders",     icon: "▦" },
-  { id: "parts",     label: "Parts",      icon: "⬡" },
-  { id: "build",     label: "Products",   icon: "⚙" },
-  { id: "companies", label: "Companies",  icon: "◻" },
+  { id: "dashboard", label: "Dashboard", icon: "◈" },
+  { id: "orders",    label: "Orders",    icon: "▦" },
+  { id: "parts",     label: "Parts",     icon: "⬡" },
+  { id: "build",     label: "Products",  icon: "⚙" },
+  { id: "purchases", label: "Restock",   icon: "↑" },
+  { id: "vendors",   label: "Vendors",   icon: "◫" },
+  { id: "companies", label: "Companies", icon: "◻" },
 ];
 
 export default function App() {
@@ -63,6 +67,8 @@ export default function App() {
         {page === "orders"    && <Orders />}
         {page === "parts"     && <Parts />}
         {page === "build"     && <Build />}
+        {page === "purchases" && <Purchases />}
+        {page === "vendors"   && <Vendors />}
         {page === "companies" && <Companies />}
       </main>
     </div>
