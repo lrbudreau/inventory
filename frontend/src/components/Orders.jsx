@@ -11,6 +11,7 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [parts, setParts] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("list"); // "list" | "detail"
   const [selected, setSelected] = useState(null);
@@ -26,10 +27,11 @@ export default function Orders() {
   const [buildResult, setBuildResult] = useState(null);
 
   async function load() {
-    const [o, pr, p] = await Promise.all([apiGet("orders"), apiGet("products"), apiGet("parts")]);
+    const [o, pr, p, c] = await Promise.all([apiGet("orders"), apiGet("products"), apiGet("parts"), apiGet("companies")]);
     setOrders(Array.isArray(o) ? o : []);
     setProducts(Array.isArray(pr) ? pr : []);
     setParts(Array.isArray(p) ? p : []);
+    setCompanies(Array.isArray(c) ? c : []);
     setLoading(false);
   }
 
@@ -41,6 +43,11 @@ export default function Orders() {
     const items = await apiGet("orderProducts", { id: order.id });
     setOrderItems(Array.isArray(items) ? items : []);
     setView("detail");
+  }
+
+  function getCompanyName(companyID) {
+    const c = companies.find(c => c.id == companyID);
+    return c ? c.name : companyID;
   }
 
   function getProductName(productID) {
@@ -208,7 +215,12 @@ export default function Orders() {
               </div>
               <div className="field">
                 <label>Company / Customer</label>
-                <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Acme Co." required />
+                <select value={companyName} onChange={e => setCompanyName(e.target.value)} required>
+                  <option value="">Select a company…</option>
+                  {companies.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
               {!editingOrder && (
                 <div className="field">
@@ -274,7 +286,7 @@ export default function Orders() {
                   <button className="item-btn" onClick={() => selectOrder(o)}>
                     <div className="item-main">
                       <span className="item-name">#{o.orderNumber}</span>
-                      <span className="item-sub">{o.companyID}</span>
+                      <span className="item-sub">{getCompanyName(o.companyID)}</span>
                     </div>
                   </button>
                   <div className="item-right">
@@ -296,7 +308,7 @@ export default function Orders() {
           <div className="order-meta card">
             <div className="order-meta-row">
               <span className="meta-label">Customer</span>
-              <span className="meta-value">{selected.companyID}</span>
+              <span className="meta-value">{getCompanyName(selected.companyID)}</span>
             </div>
             <div className="order-meta-row">
               <span className="meta-label">Status</span>
