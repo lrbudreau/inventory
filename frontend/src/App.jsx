@@ -11,12 +11,17 @@ import Users from "./components/Users";
 import ChangePassword from "./components/ChangePassword";
 import Reorder from "./components/Reorder";
 import ActivityLog from "./components/ActivityLog";
+import MoreMenu from "./components/MoreMenu";
 
-const ADMIN_NAV = [
+// First 4 shown in mobile bottom nav, rest in "More"
+const ADMIN_PRIMARY = [
   { id: "dashboard",   label: "Dashboard",  icon: "◈" },
   { id: "orders",      label: "Orders",     icon: "▦" },
   { id: "parts",       label: "Parts",      icon: "⬡" },
   { id: "build",       label: "Products",   icon: "⚙" },
+];
+
+const ADMIN_MORE = [
   { id: "purchases",   label: "Restock",    icon: "↑" },
   { id: "reorder",     label: "Reorder",    icon: "◎" },
   { id: "vendors",     label: "Vendors",    icon: "◫" },
@@ -24,6 +29,8 @@ const ADMIN_NAV = [
   { id: "activitylog", label: "Activity",   icon: "◷" },
   { id: "users",       label: "Users",      icon: "◉" },
 ];
+
+const ADMIN_NAV = [...ADMIN_PRIMARY, ...ADMIN_MORE];
 
 const BASIC_NAV = [
   { id: "dashboard",  label: "Dashboard", icon: "◈" },
@@ -62,6 +69,18 @@ export default function App() {
               <span className="nav-label">{n.label}</span>
             </button>
           ))}
+        </nav>
+        {/* Mobile bottom nav — primary items + More menu */}
+        <nav className="mobile-bottom-nav">
+          {(isAdmin ? ADMIN_PRIMARY : BASIC_NAV).map(n => (
+            <button key={n.id} className={`nav-item ${safePage === n.id ? "active" : ""}`} onClick={() => setPage(n.id)}>
+              <span className="nav-icon">{n.icon}</span>
+              <span className="nav-label">{n.label}</span>
+            </button>
+          ))}
+          {isAdmin && (
+            <MoreMenu items={ADMIN_MORE} currentPage={safePage} onNavigate={setPage} />
+          )}
         </nav>
         <div className="sidebar-footer">
           <div className="user-info">
