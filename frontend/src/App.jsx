@@ -28,10 +28,27 @@ const BASIC_NAV = [
 ];
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("fabtrack_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
   const [page, setPage] = useState("dashboard");
 
-  if (!user) return <Login onLogin={(u) => { setUser(u); setPage("dashboard"); }} />;
+  function handleLogin(u) {
+    localStorage.setItem("fabtrack_user", JSON.stringify(u));
+    setUser(u);
+    setPage("dashboard");
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("fabtrack_user");
+    setUser(null);
+    setPage("dashboard");
+  }
+
+  if (!user) return <Login onLogin={handleLogin} />;
 
   const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
@@ -69,7 +86,7 @@ export default function App() {
             </div>
           </div>
           <button className="btn-change-pw" onClick={() => setPage("password")}>Change Password</button>
-          <button className="btn-logout" onClick={() => { setUser(null); setPage("dashboard"); }}>Sign Out</button>
+          <button className="btn-logout" onClick={handleLogout}>Sign Out</button>
         </div>
       </aside>
 
@@ -83,7 +100,7 @@ export default function App() {
             <span className="user-avatar" onClick={() => setPage("password")} title="Change password" style={{cursor:"pointer"}}>
               {user.username?.[0]?.toUpperCase()}
             </span>
-            <button className="btn-logout" style={{width:"auto"}} onClick={() => { setUser(null); setPage("dashboard"); }}>Out</button>
+            <button className="btn-logout" style={{width:"auto"}} onClick={handleLogout}>Out</button>
           </div>
         </div>
 
