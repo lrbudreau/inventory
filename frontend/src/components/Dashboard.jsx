@@ -11,10 +11,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function load() {
       const [p, o, c, pr] = await Promise.all([
-        apiGet("parts"),
-        apiGet("orders"),
-        apiGet("companies"),
-        apiGet("products"),
+        apiGet("parts"), apiGet("orders"), apiGet("companies"), apiGet("products"),
       ]);
       setParts(Array.isArray(p) ? p : []);
       setOrders(Array.isArray(o) ? o : []);
@@ -25,14 +22,21 @@ export default function Dashboard() {
     load();
   }, []);
 
-  const lowStock = parts.filter((p) => p.quantity < 20);
-  const companyMap = Object.fromEntries(companies.map((c) => [c.id, c.name]));
+  // Use min if set, otherwise fall back to hardcoded 20
+  const lowStock = parts.filter(p => {
+    if (p.quantity === 0) return true;
+    if (p.min > 0) return p.quantity <= p.min;
+    return false;
+  });
 
-  if (loading) return <div className="loading">Loading dashboard…</div>;
+  const outOfStock = parts.filter(p => p.quantity === 0);
+  const activeOrders = orders.filter(o => o.status !== "Complete");
+  const companyMap = Object.fromEntries(companies.map(c => [c.id, c.name]));
+
+  if (loading) return <div className="loading pad">Loading dashboard…</div>;
 
   return (
     <div className="dashboard">
-      {/* Stats Row */}
       <div className="stats-row">
         <div className="stat-card">
           <span className="stat-num">{parts.length}</span>
@@ -43,73 +47,63 @@ export default function Dashboard() {
           <span className="stat-label">Products</span>
         </div>
         <div className="stat-card">
-          <span className="stat-num">{orders.length}</span>
-          <span className="stat-label">Orders</span>
+          <span className="stat-num">{activeOrders.length}</span>
+          <span className="stat-label">Active Orders</span>
         </div>
-        <div className="stat-card warn">
+        <div className={`stat-card ${lowStock.length > 0 ? "warn" : ""}`}>
           <span className="stat-num">{lowStock.length}</span>
           <span className="stat-label">Low Stock</span>
         </div>
       </div>
 
-      <div className="dash-grid">
-        {/* Recent Orders */}
-        <div className="card">
-          <h2>Active Orders</h2>
-          {orders.length === 0 ? (
-            <p className="empty">No orders yet.</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Order #</th>
-                  <th>Company</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((o) => (
-                  <tr key={o.id}>
-                    <td>
-                      <span className="order-num">#{o.orderNumber || o.id}</span>
-                    </td>
-                    <td>{companyMap[o.companyID] || "—"}</td>
-                    <td>
-                      <span className="badge badge-active">In Progress</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+      {/* Low Stock Alert */}
+      {lowStock.length > 0 && (
+        <div className="card alert-card">
+          <h2>⚠ Stock Alerts</h2>
+          <ul className="item-list">
+            {lowStock.map(p => (
+              <li key={p.id} className="item-row">
+                <div className="item-main">
+                  <span className="item-name">{p.name}</span>
+                  <span className="item-sub">
+                    {p.quantity === 0
+                      ? "Out of stock"
+                      : `${p.quantity} remaining · min is ${p.min}`}
+                  </span>
+                </div>
+                <div className="item-right">
+                  <span className={`qty-badge ${p.quantity === 0 ? "danger" : "warn"}`}>
+                    {p.quantity === 0 ? "OUT" : p.quantity}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        {/* Low Stock Warning */}
-        <div className="card">
-          <h2>⚠ Low Stock Alert</h2>
-          {lowStock.length === 0 ? (
-            <p className="empty success">All parts well stocked.</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Part</th>
-                  <th>Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lowStock.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.name}</td>
-                    <td>
-                      <span className="badge badge-warn">{p.quantity}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+      {/* Active Orders */}
+      <div className="card">
+        <h2>Active Orders</h2>
+        {activeOrders.length === 0 ? (
+          <p className="empty">No active orders.</p>
+        ) : (
+          <ul className="item-list">
+            {activeOrders.map(o => (
+              <li key={o.id} className="item-row">
+                <div className="item-main">
+                  <span className="item-name">#{o.orderNumber}</span>
+                  <span className="item-sub">{companyMap[o.companyID] || o.companyID || "—"}</span>
+                </div>
+                <div className="item-right">
+                  <span className={`badge ${o.status === "In Progress" ? "badge-warn" : "badge-active"}`}>
+                    {o.status || "Open"}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
