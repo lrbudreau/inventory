@@ -795,3 +795,32 @@ textarea { resize: vertical; }
 .stock-label.ok     { color: var(--success); }
 .stock-label.warn   { color: var(--warn); }
 .stock-label.danger { color: var(--danger); }
+
+/* ===================== PURCHASES ===================== */
+.purchase-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.summary-chip {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.summary-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.summary-total {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
