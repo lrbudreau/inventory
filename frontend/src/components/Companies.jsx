@@ -52,10 +52,10 @@ export default function Companies() {
     e.preventDefault();
     setSaving(true);
     if (editingCompany) {
-      await apiPost({ resource: "companies/update", data: { id: editingCompany.id, ...form } });
+      await apiPost("companies/update", { id: editingCompany.id, ...form });
       if (selected?.id === editingCompany.id) setSelected({ ...selected, ...form });
     } else {
-      await apiPost({ resource: "companies", data: form });
+      await apiPost("companies/create", form);
     }
     setShowForm(false);
     setEditingCompany(null);
@@ -65,7 +65,7 @@ export default function Companies() {
 
   async function handleDelete(company) {
     setSaving(true);
-    await apiPost({ resource: "companies/delete", data: { id: company.id } });
+    await apiPost("companies/delete", { id: company.id });
     setConfirmDelete(null);
     if (selected?.id === company.id) { setSelected(null); setView("list"); }
     await load();
