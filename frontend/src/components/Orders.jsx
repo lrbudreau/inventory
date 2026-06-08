@@ -24,6 +24,7 @@ export default function Orders() {
   const [productLines, setProductLines] = useState([{ productID: "", quantity: 1 }]);
   const [saving, setSaving] = useState(false);
   const [building, setBuilding] = useState(null);
+  const [buildCounts, setBuildCounts] = useState({});
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [buildResult, setBuildResult] = useState(null);
 
@@ -76,20 +77,21 @@ export default function Orders() {
   }
 
   async function handleBuildForOrder(item) {
+    const count = Math.min(buildCounts[item.productID] || 1, item.quantity - item.built);
     const remaining = item.quantity - item.built;
-    if (remaining <= 0) return;
+    if (remaining <= 0 || count <= 0) return;
     setBuilding(item.productID);
     setBuildResult(null);
 
-    const ok = await canBuildProduct(item.productID, 1);
+    const ok = await canBuildProduct(item.productID, count);
     if (!ok) {
-      setBuildResult({ ok: false, message: `Not enough parts to build ${getProductName(item.productID)}.` });
+      setBuildResult({ ok: false, message: `Not enough parts to build ${count}x ${getProductName(item.productID)}.` });
       setBuilding(null);
       return;
     }
 
-    const newBuilt = item.built + 1;
-    const res = await apiPost("orderProducts/buildFor", { orderID: selected.id, productId: item.productID, count: 1, newBuilt });
+    const newBuilt = item.built + count;
+    const res = await apiPost("orderProducts/buildFor", { orderID: selected.id, productId: item.productID, count, newBuilt });
 
     if (res.success) {
       const updatedItems = orderItems.map(i =>
@@ -355,13 +357,23 @@ export default function Orders() {
                     </div>
                     <div className="item-right">
                       {!done ? (
-                        <button
-                          className="btn-build-sm"
-                          onClick={() => handleBuildForOrder(item)}
-                          disabled={building === item.productID}
-                        >
-                          {building === item.productID ? "…" : "Build 1"}
-                        </button>
+                        <div className="build-inline">
+                          <input
+                            type="number"
+                            min="1"
+                            max={remaining}
+                            value={buildCounts[item.productID] || 1}
+                            onChange={e => setBuildCounts({ ...buildCounts, [item.productID]: Math.min(Number(e.target.value), remaining) })}
+                            className="build-count-input"
+                          />
+                          <button
+                            className="btn-build-sm"
+                            onClick={() => handleBuildForOrder(item)}
+                            disabled={building === item.productID}
+                          >
+                            {building === item.productID ? "…" : "Build"}
+                          </button>
+                        </div>
                       ) : (
                         <span className="qty-badge ok">✓</span>
                       )}
