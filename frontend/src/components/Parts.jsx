@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
+import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
 
 export default function Parts() {
   const [parts, setParts] = useState([]);
@@ -84,7 +85,7 @@ export default function Parts() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingPart ? "Edit Part" : "New Part"}</h2>
-              <button className="modal-close" onClick={cancelForm}>✕</button>
+              <button className="modal-close" onClick={cancelForm}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSave} className="inline-form">
               <div className="field">
@@ -136,8 +137,8 @@ export default function Parts() {
                   <span className={`qty-badge ${p.quantity === 0 ? "danger" : p.quantity < 20 ? "warn" : "ok"}`}>
                     {p.quantity}
                   </span>
-                  <button className="btn-icon" onClick={() => startEdit(p)}>✏️</button>
-                  <button className="btn-icon" onClick={() => setConfirmDelete(p)}>🗑️</button>
+                  <button className="btn-icon" onClick={() => startEdit(p)}><EditIcon /></button>
+                  <button className="btn-icon" onClick={() => setConfirmDelete(p)}><DeleteIcon /></button>
                 </div>
               </li>
             ))}
