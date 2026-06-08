@@ -641,3 +641,15 @@ textarea { resize: vertical; }
   margin-top: 4px;
 }
 .btn-add-part:hover { border-color: var(--accent); color: var(--accent); }
+
+/* item-btn: full-width clickable area inside a list row */
+.item-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex: 1;
+  text-align: left;
+  padding: 0;
+  min-width: 0;
+  color: var(--text);
+}
