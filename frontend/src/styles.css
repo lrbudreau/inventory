@@ -609,3 +609,35 @@ textarea { resize: vertical; }
   .modal-overlay { align-items: center; }
   .modal { border-radius: var(--radius); max-width: 480px; }
 }
+
+/* ===================== PART LINES ===================== */
+.part-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.part-line select { flex: 1; }
+
+.part-line .qty-input {
+  width: 70px;
+  flex-shrink: 0;
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.btn-add-part {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 10px;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  margin-top: 4px;
+}
+.btn-add-part:hover { border-color: var(--accent); color: var(--accent); }
