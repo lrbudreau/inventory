@@ -79,18 +79,18 @@ export default function Users({ currentUser }) {
     setSaving(false);
   }
 
-  const pendingUsers = users.filter(u => u.roleID === "pending");
-  const activeUsers = users.filter(u => u.roleID !== "pending");
+  const pendingUsers = users.filter(u => u.roleName === "pending");
+  const activeUsers = users.filter(u => u.roleName !== "pending");
 
-  function roleBadge(roleID) {
-    if (roleID === "admin") return "badge-warn";
-    if (roleID === "pending") return "badge-danger";
+  function roleBadge(roleName) {
+    if (roleName === "admin") return "badge-warn";
+    if (roleName === "pending") return "badge-danger";
     return "badge-active";
   }
 
-  function roleLabel(roleID) {
-    if (roleID === "admin") return "Admin";
-    if (roleID === "pending") return "Pending";
+  function roleLabel(roleName) {
+    if (roleName === "admin") return "Admin";
+    if (roleName === "pending") return "Pending";
     return "Basic";
   }
 
@@ -138,7 +138,7 @@ export default function Users({ currentUser }) {
                   <span className="item-sub">{u.email || "—"}</span>
                 </div>
                 <div className="item-right">
-                  <span className={`badge ${roleBadge(u.roleID)}`}>{roleLabel(u.roleID)}</span>
+                  <span className={`badge ${roleBadge(u.roleName)}`}>{roleLabel(u.roleName)}</span>
                   <button className="btn-icon" onClick={() => { setResetUser(u); setNewPassword(""); }} title="Reset password">🔑</button>
                   {u.id != currentUser.id && (
                     <button className="btn-icon" onClick={() => setConfirmDelete(u)}><DeleteIcon /></button>
