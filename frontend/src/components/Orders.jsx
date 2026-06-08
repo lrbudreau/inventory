@@ -40,7 +40,7 @@ export default function Orders() {
   async function selectOrder(order) {
     setSelected(order);
     setBuildResult(null);
-    const items = await apiGet("orderProducts", { id: order.id });
+    const items = await apiGet("orderProducts", { orderID: order.id });
     setOrderItems(Array.isArray(items) ? items : []);
     setView("detail");
   }
@@ -61,7 +61,7 @@ export default function Orders() {
   }
 
   async function getProductParts(productID) {
-    return await apiGet("productParts", { id: productID });
+    return await apiGet("productParts", { productID });
   }
 
   async function canBuildProduct(productID, count) {
