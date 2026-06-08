@@ -4,10 +4,12 @@ import { apiGet, apiPost } from "../auth";
 export default function Parts() {
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingPart, setEditingPart] = useState(null);
   const [form, setForm] = useState({ name: "", barcode: "", quantity: 0 });
   const [saving, setSaving] = useState(false);
-  const [search, setSearch] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   async function load() {
     const p = await apiGet("parts");
@@ -17,17 +19,46 @@ export default function Parts() {
 
   useEffect(() => { load(); }, []);
 
-  async function handleAdd(e) {
+  function startAdd() {
+    setEditingPart(null);
+    setForm({ name: "", barcode: "", quantity: 0 });
+    setShowForm(true);
+  }
+
+  function startEdit(part) {
+    setEditingPart(part);
+    setForm({ name: part.name, barcode: part.barcode || "", quantity: part.quantity });
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setShowForm(false);
+    setEditingPart(null);
+  }
+
+  async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
-    await apiPost({ resource: "parts", data: form });
-    setForm({ name: "", barcode: "", quantity: 0 });
+    if (editingPart) {
+      await apiPost({ resource: "parts/update", data: { id: editingPart.id, ...form } });
+    } else {
+      await apiPost({ resource: "parts", data: form });
+    }
     setShowForm(false);
+    setEditingPart(null);
     await load();
     setSaving(false);
   }
 
-  const filtered = parts.filter((p) =>
+  async function handleDelete(part) {
+    setSaving(true);
+    await apiPost({ resource: "parts/delete", data: { id: part.id } });
+    setConfirmDelete(null);
+    await load();
+    setSaving(false);
+  }
+
+  const filtered = parts.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     (p.barcode && p.barcode.includes(search))
   );
@@ -35,94 +66,83 @@ export default function Parts() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Parts Inventory</h1>
-        <div className="header-actions">
-          <input
-            className="search-input"
-            placeholder="Search parts…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-            {showForm ? "Cancel" : "+ Add Part"}
-          </button>
-        </div>
+        <h1>Parts</h1>
+        <button className="btn-primary" onClick={startAdd}>+ Add</button>
+      </div>
+
+      <div className="search-bar">
+        <input
+          className="search-input full-width"
+          placeholder="Search parts…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
 
       {showForm && (
-        <div className="card form-card">
-          <h2>New Part</h2>
-          <form onSubmit={handleAdd} className="inline-form">
-            <div className="field">
-              <label>Part Name</label>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Steel Bracket"
-                required
-              />
+        <div className="modal-overlay" onClick={cancelForm}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editingPart ? "Edit Part" : "New Part"}</h2>
+              <button className="modal-close" onClick={cancelForm}>✕</button>
             </div>
-            <div className="field">
-              <label>Barcode (optional)</label>
-              <input
-                value={form.barcode}
-                onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-                placeholder="e.g. 123456789"
-              />
-            </div>
-            <div className="field">
-              <label>Initial Quantity</label>
-              <input
-                type="number"
-                min="0"
-                value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-              />
-            </div>
-            <button className="btn-primary" type="submit" disabled={saving}>
-              {saving ? "Saving…" : "Save Part"}
-            </button>
-          </form>
+            <form onSubmit={handleSave} className="inline-form">
+              <div className="field">
+                <label>Part Name</label>
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Steel Bracket" required />
+              </div>
+              <div className="field">
+                <label>Barcode (optional)</label>
+                <input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="e.g. 123456789" />
+              </div>
+              <div className="field">
+                <label>Quantity</label>
+                <input type="number" min="0" value={form.quantity} onChange={e => setForm({ ...form, quantity: Number(e.target.value) })} />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={cancelForm}>Cancel</button>
+                <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      <div className="card">
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
+            <h2>Delete Part?</h2>
+            <p className="confirm-text">Are you sure you want to delete <strong>{confirmDelete.name}</strong>? This cannot be undone.</p>
+            <div className="form-actions">
+              <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="btn-danger" onClick={() => handleDelete(confirmDelete)} disabled={saving}>{saving ? "Deleting…" : "Delete"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="card no-pad">
         {loading ? (
-          <p className="loading">Loading parts…</p>
+          <p className="loading pad">Loading parts…</p>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Part Name</th>
-                <th>Barcode</th>
-                <th>Quantity</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id}>
-                  <td className="muted">{p.id}</td>
-                  <td><strong>{p.name}</strong></td>
-                  <td className="muted">{p.barcode || "—"}</td>
-                  <td>{p.quantity}</td>
-                  <td>
-                    {p.quantity === 0 ? (
-                      <span className="badge badge-danger">Out of Stock</span>
-                    ) : p.quantity < 20 ? (
-                      <span className="badge badge-warn">Low Stock</span>
-                    ) : (
-                      <span className="badge badge-ok">In Stock</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={5} className="empty">No parts found.</td></tr>
-              )}
-            </tbody>
-          </table>
+          <ul className="item-list">
+            {filtered.map(p => (
+              <li key={p.id} className="item-row">
+                <div className="item-main">
+                  <span className="item-name">{p.name}</span>
+                  {p.barcode && <span className="item-sub">{p.barcode}</span>}
+                </div>
+                <div className="item-right">
+                  <span className={`qty-badge ${p.quantity === 0 ? "danger" : p.quantity < 20 ? "warn" : "ok"}`}>
+                    {p.quantity}
+                  </span>
+                  <button className="btn-icon" onClick={() => startEdit(p)}>✏️</button>
+                  <button className="btn-icon" onClick={() => setConfirmDelete(p)}>🗑️</button>
+                </div>
+              </li>
+            ))}
+            {filtered.length === 0 && <li className="empty pad">No parts found.</li>}
+          </ul>
         )}
       </div>
     </div>
