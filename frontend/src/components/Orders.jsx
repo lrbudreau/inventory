@@ -41,9 +41,14 @@ export default function Orders() {
   async function selectOrder(order) {
     setSelected(order);
     setBuildResult(null);
-    const items = await apiGet("orderProducts", { orderID: order.id });
-    setOrderItems(Array.isArray(items) ? items : []);
+    setOrderItems([]);
     setView("detail");
+    try {
+      const items = await apiGet("orderProducts", { orderID: order.id });
+      setOrderItems(Array.isArray(items) ? items : []);
+    } catch(err) {
+      console.error("Failed to load order items", err);
+    }
   }
 
   function getCompanyName(companyID) {
