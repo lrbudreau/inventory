@@ -9,16 +9,20 @@ import Vendors from "./components/Vendors";
 import Purchases from "./components/Purchases";
 import Users from "./components/Users";
 import ChangePassword from "./components/ChangePassword";
+import Reorder from "./components/Reorder";
+import ActivityLog from "./components/ActivityLog";
 
 const ADMIN_NAV = [
-  { id: "dashboard",  label: "Dashboard", icon: "◈" },
-  { id: "orders",     label: "Orders",    icon: "▦" },
-  { id: "parts",      label: "Parts",     icon: "⬡" },
-  { id: "build",      label: "Products",  icon: "⚙" },
-  { id: "purchases",  label: "Restock",   icon: "↑" },
-  { id: "vendors",    label: "Vendors",   icon: "◫" },
-  { id: "companies",  label: "Companies", icon: "◻" },
-  { id: "users",      label: "Users",     icon: "◉" },
+  { id: "dashboard",   label: "Dashboard",  icon: "◈" },
+  { id: "orders",      label: "Orders",     icon: "▦" },
+  { id: "parts",       label: "Parts",      icon: "⬡" },
+  { id: "build",       label: "Products",   icon: "⚙" },
+  { id: "purchases",   label: "Restock",    icon: "↑" },
+  { id: "reorder",     label: "Reorder",    icon: "◎" },
+  { id: "vendors",     label: "Vendors",    icon: "◫" },
+  { id: "companies",   label: "Companies",  icon: "◻" },
+  { id: "activitylog", label: "Activity",   icon: "◷" },
+  { id: "users",       label: "Users",      icon: "◉" },
 ];
 
 const BASIC_NAV = [
@@ -29,34 +33,20 @@ const BASIC_NAV = [
 
 export default function App() {
   const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem("fabtrack_user");
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
+    try { const s = localStorage.getItem("fabtrack_user"); return s ? JSON.parse(s) : null; }
+    catch { return null; }
   });
   const [page, setPage] = useState("dashboard");
 
-  function handleLogin(u) {
-    localStorage.setItem("fabtrack_user", JSON.stringify(u));
-    setUser(u);
-    setPage("dashboard");
-  }
-
-  function handleLogout() {
-    localStorage.removeItem("fabtrack_user");
-    setUser(null);
-    setPage("dashboard");
-  }
+  function handleLogin(u) { localStorage.setItem("fabtrack_user", JSON.stringify(u)); setUser(u); setPage("dashboard"); }
+  function handleLogout() { localStorage.removeItem("fabtrack_user"); setUser(null); setPage("dashboard"); }
 
   if (!user) return <Login onLogin={handleLogin} />;
 
   const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
-
-  // Redirect if basicUser tries to access admin page
-  const safePage = (!isAdmin && !["dashboard","orders","parts","password"].includes(page))
-    ? "dashboard"
-    : page;
+  const adminPages = ["build","purchases","reorder","vendors","companies","activitylog","users"];
+  const safePage = (!isAdmin && adminPages.includes(page)) ? "dashboard" : page;
 
   return (
     <div className="app-shell">
@@ -67,11 +57,7 @@ export default function App() {
         </div>
         <nav className="sidebar-nav">
           {nav.map(n => (
-            <button
-              key={n.id}
-              className={`nav-item ${safePage === n.id ? "active" : ""}`}
-              onClick={() => setPage(n.id)}
-            >
+            <button key={n.id} className={`nav-item ${safePage === n.id ? "active" : ""}`} onClick={() => setPage(n.id)}>
               <span className="nav-icon">{n.icon}</span>
               <span className="nav-label">{n.label}</span>
             </button>
@@ -82,7 +68,7 @@ export default function App() {
             <span className="user-avatar">{user.username?.[0]?.toUpperCase()}</span>
             <div>
               <div className="user-name">{user.username}</div>
-              <div className="user-role">{user.roleName === "admin" || user.roleID === "admin" ? "Admin" : "Basic User"}</div>
+              <div className="user-role">{isAdmin ? "Admin" : "Basic User"}</div>
             </div>
           </div>
           <button className="btn-change-pw" onClick={() => setPage("password")}>Change Password</button>
@@ -92,27 +78,24 @@ export default function App() {
 
       <main className="main-content">
         <div className="mobile-header">
-          <div className="mobile-brand">
-            <span>⚙</span>
-            <span>FabTrack</span>
-          </div>
+          <div className="mobile-brand"><span>⚙</span><span>FabTrack</span></div>
           <div className="mobile-user">
-            <span className="user-avatar" onClick={() => setPage("password")} title="Change password" style={{cursor:"pointer"}}>
-              {user.username?.[0]?.toUpperCase()}
-            </span>
+            <span className="user-avatar" onClick={() => setPage("password")} style={{cursor:"pointer"}}>{user.username?.[0]?.toUpperCase()}</span>
             <button className="btn-logout" style={{width:"auto"}} onClick={handleLogout}>Out</button>
           </div>
         </div>
 
-        {safePage === "dashboard"  && <Dashboard />}
-        {safePage === "orders"     && <Orders />}
-        {safePage === "parts"      && <Parts readOnly={!isAdmin} />}
-        {safePage === "build"      && isAdmin && <Build />}
-        {safePage === "purchases"  && isAdmin && <Purchases />}
-        {safePage === "vendors"    && isAdmin && <Vendors />}
-        {safePage === "companies"  && isAdmin && <Companies />}
-        {safePage === "users"      && isAdmin && <Users currentUser={user} />}
-        {safePage === "password"   && <ChangePassword currentUser={user} />}
+        {safePage === "dashboard"   && <Dashboard />}
+        {safePage === "orders"      && <Orders currentUser={user} />}
+        {safePage === "parts"       && <Parts readOnly={!isAdmin} />}
+        {safePage === "build"       && isAdmin && <Build />}
+        {safePage === "purchases"   && isAdmin && <Purchases currentUser={user} />}
+        {safePage === "reorder"     && isAdmin && <Reorder />}
+        {safePage === "vendors"     && isAdmin && <Vendors />}
+        {safePage === "companies"   && isAdmin && <Companies />}
+        {safePage === "activitylog" && isAdmin && <ActivityLog />}
+        {safePage === "users"       && isAdmin && <Users currentUser={user} />}
+        {safePage === "password"    && <ChangePassword currentUser={user} />}
       </main>
     </div>
   );
