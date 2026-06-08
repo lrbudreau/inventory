@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { apiPost } from "../auth";
+import { apiGet } from "../auth";
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -12,10 +12,7 @@ export default function Login({ onLogin }) {
     setLoading(true);
     setError("");
     try {
-      const res = await apiPost({
-        resource: "login",
-        data: { username, password },
-      });
+      const res = await apiGet("login", { username, password });
       if (res.success) {
         onLogin(res);
       } else {
