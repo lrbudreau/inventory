@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
+import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
 
 const EMPTY_FORM = { name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" };
 
@@ -93,8 +94,8 @@ export default function Companies() {
         )}
         {view === "detail" && selected && (
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn-icon" onClick={() => openEdit(selected)}>✏️</button>
-            <button className="btn-icon" onClick={() => setConfirmDelete(selected)}>🗑️</button>
+            <button className="btn-icon" onClick={() => openEdit(selected)}><EditIcon /></button>
+            <button className="btn-icon" onClick={() => setConfirmDelete(selected)}><DeleteIcon /></button>
           </div>
         )}
       </div>
@@ -116,7 +117,7 @@ export default function Companies() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingCompany ? "Edit Company" : "New Company"}</h2>
-              <button className="modal-close" onClick={() => setShowForm(false)}>✕</button>
+              <button className="modal-close" onClick={() => setShowForm(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSave} className="inline-form">
               <div className="field">
@@ -188,8 +189,8 @@ export default function Companies() {
                     </div>
                   </button>
                   <div className="item-right">
-                    <button className="btn-icon" onClick={() => openEdit(c)}>✏️</button>
-                    <button className="btn-icon" onClick={() => setConfirmDelete(c)}>🗑️</button>
+                    <button className="btn-icon" onClick={() => openEdit(c)}><EditIcon /></button>
+                    <button className="btn-icon" onClick={() => setConfirmDelete(c)}><DeleteIcon /></button>
                   </div>
                 </li>
               ))}
