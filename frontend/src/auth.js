@@ -9,11 +9,15 @@ export async function apiGet(resource, params = {}) {
   return res.json();
 }
 
-export async function apiPost(payload) {
-  const res = await fetch(API_BASE, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+// All write operations use GET to avoid CORS preflight issues with Google Apps Script
+export async function apiPost(resource, data = {}) {
+  const url = new URL(API_BASE);
+  url.searchParams.set("resource", resource);
+  for (const k in data) {
+    if (data[k] !== undefined && data[k] !== null) {
+      url.searchParams.set(k, data[k]);
+    }
+  }
+  const res = await fetch(url.toString(), { method: "GET" });
   return res.json();
 }
