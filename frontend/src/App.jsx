@@ -3,11 +3,13 @@ import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 import Parts from "./components/Parts";
 import Build from "./components/Build";
+import Orders from "./components/Orders";
 
 const NAV = [
   { id: "dashboard", label: "Dashboard", icon: "◈" },
-  { id: "parts", label: "Parts", icon: "⬡" },
-  { id: "build", label: "Build", icon: "⚙" },
+  { id: "orders",    label: "Orders",    icon: "📋" },
+  { id: "parts",     label: "Parts",     icon: "⬡" },
+  { id: "build",     label: "Build",     icon: "⚙" },
 ];
 
 export default function App() {
@@ -51,13 +53,14 @@ export default function App() {
             <span>FabTrack</span>
           </div>
           <div className="mobile-user">
-            <span className="user-avatar" title={user.username}>{user.username?.[0]?.toUpperCase()}</span>
+            <span className="user-avatar">{user.username?.[0]?.toUpperCase()}</span>
             <button className="btn-logout" style={{width:"auto"}} onClick={() => setUser(null)}>Out</button>
           </div>
         </div>
         {page === "dashboard" && <Dashboard />}
-        {page === "parts" && <Parts />}
-        {page === "build" && <Build />}
+        {page === "orders"    && <Orders />}
+        {page === "parts"     && <Parts />}
+        {page === "build"     && <Build />}
       </main>
     </div>
   );
