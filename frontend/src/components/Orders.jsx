@@ -8,7 +8,23 @@ const STATUS_COLORS = {
   "Complete":    "badge-ok",
 };
 
-export default function Orders() {
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const due = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+}
+
+function dueBadge(days) {
+  if (days === null) return null;
+  if (days < 0) return { label:`${Math.abs(days)}d overdue`, cls:"badge-danger" };
+  if (days === 0) return { label:"Due today", cls:"badge-danger" };
+  if (days <= 3) return { label:`${days}d left`, cls:"badge-warn" };
+  return { label:`${days}d left`, cls:"badge-active" };
+}
+
+export default function Orders({ currentUser }) {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [parts, setParts] = useState([]);
@@ -21,6 +37,7 @@ export default function Orders() {
   const [editingOrder, setEditingOrder] = useState(null);
   const [orderNumber, setOrderNumber] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [productLines, setProductLines] = useState([{ productID: "", quantity: 1 }]);
   const [saving, setSaving] = useState(false);
   const [building, setBuilding] = useState(null);
@@ -38,6 +55,53 @@ export default function Orders() {
   }
 
   useEffect(() => { load(); }, []);
+
+  function printOrder(summary = true) {
+    const win = window.open("", "_blank");
+    const company = companies.find(c => c.id == selected.companyID);
+    const itemRows = orderItems.map(item => {
+      const built = item.built || 0;
+      const remaining = item.quantity - built;
+      return `<tr>
+        <td>${getProductName(item.productID)}</td>
+        <td>${item.quantity}</td>
+        ${!summary ? `<td>${built}</td><td>${remaining}</td>` : ""}
+      </tr>`;
+    }).join("");
+
+    win.document.write(`
+      <html><head><title>Order #${selected.orderNumber}</title>
+      <style>
+        body { font-family: sans-serif; padding: 24px; color: #111; }
+        h1 { font-size: 1.5rem; margin-bottom: 4px; }
+        .meta { color: #555; font-size: 0.9rem; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th { text-align: left; border-bottom: 2px solid #333; padding: 8px 12px; font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 8px 12px; border-bottom: 1px solid #ddd; }
+        .footer { margin-top: 32px; font-size: 0.8rem; color: #999; }
+        @media print { button { display:none; } }
+      </style></head>
+      <body>
+        <h1>Order #${selected.orderNumber}</h1>
+        <div class="meta">
+          Customer: ${company?.name || selected.companyID} &nbsp;|&nbsp;
+          Status: ${selected.status} &nbsp;|&nbsp;
+          ${selected.dueDate ? `Due: ${selected.dueDate} &nbsp;|&nbsp;` : ""}
+          Printed: ${new Date().toLocaleDateString()}
+        </div>
+        <table>
+          <thead><tr>
+            <th>Product</th><th>Qty Ordered</th>
+            ${!summary ? "<th>Built</th><th>Remaining</th>" : ""}
+          </tr></thead>
+          <tbody>${itemRows}</tbody>
+        </table>
+        <div class="footer">FabTrack · Generated ${new Date().toLocaleString()}</div>
+        <br/><button onclick="window.print()">Print</button>
+      </body></html>
+    `);
+    win.document.close();
+  }
 
   async function selectOrder(order) {
     setSelected(order);
@@ -91,7 +155,7 @@ export default function Orders() {
     }
 
     const newBuilt = item.built + count;
-    const res = await apiPost("orderProducts/buildFor", { orderID: selected.id, productId: item.productID, count, newBuilt });
+    const res = await apiPost("orderProducts/buildFor", { orderID: selected.id, productId: item.productID, count, newBuilt, userID: currentUser?.id, username: currentUser?.username });
 
     if (res.success) {
       const updatedItems = orderItems.map(i =>
@@ -114,6 +178,7 @@ export default function Orders() {
     setEditingOrder(null);
     setOrderNumber("");
     setCompanyName("");
+    setDueDate("");
     setProductLines([{ productID: "", quantity: 1 }]);
     setShowForm(true);
   }
@@ -122,6 +187,7 @@ export default function Orders() {
     setEditingOrder(order);
     setOrderNumber(order.orderNumber);
     setCompanyName(order.companyID);
+    setDueDate(order.dueDate || "");
     setProductLines([{ productID: "", quantity: 1 }]);
     setShowForm(true);
   }
@@ -142,9 +208,9 @@ export default function Orders() {
     e.preventDefault();
     setSaving(true);
     if (editingOrder) {
-      await apiPost("orders/update", { id: editingOrder.id, orderNumber, companyID: companyName, status: editingOrder.status });
+      await apiPost("orders/update", { id: editingOrder.id, orderNumber, companyID: companyName, status: editingOrder.status, dueDate });
     } else {
-      const res = await apiPost("orders/create", { orderNumber, companyID: companyName });
+      const res = await apiPost("orders/create", { orderNumber, companyID: companyName, dueDate });
       const newOrderId = res.id;
       for (const line of productLines) {
         if (line.productID) {
@@ -194,9 +260,12 @@ export default function Orders() {
           <button className="btn-primary" onClick={openNewOrder}>+ New</button>
         )}
         {view === "detail" && selected && (
-          <span className={`badge ${STATUS_COLORS[selected.status] || "badge-active"}`}>
-            {selected.status}
-          </span>
+          <div style={{display:"flex", gap:6, alignItems:"center", flexWrap:"wrap"}}>
+            {(() => { const d = daysUntil(selected.dueDate); const b = dueBadge(d); return b ? <span className={`badge ${b.cls}`}>{b.label}</span> : null; })()}
+            <span className={`badge ${STATUS_COLORS[selected.status] || "badge-active"}`}>{selected.status}</span>
+            <button className="btn-print" onClick={() => printOrder(true)} title="Print summary">🖨 Summary</button>
+            <button className="btn-print" onClick={() => printOrder(false)} title="Print detail">🖨 Detail</button>
+          </div>
         )}
       </div>
 
@@ -212,6 +281,10 @@ export default function Orders() {
               <div className="field">
                 <label>Order Number</label>
                 <input value={orderNumber} onChange={e => setOrderNumber(e.target.value)} placeholder="e.g. ORD-001" required />
+              </div>
+              <div className="field">
+                <label>Due Date (optional)</label>
+                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
               </div>
               <div className="field">
                 <label>Company / Customer</label>
@@ -310,6 +383,12 @@ export default function Orders() {
               <span className="meta-label">Customer</span>
               <span className="meta-value">{getCompanyName(selected.companyID)}</span>
             </div>
+            {selected.dueDate && (
+              <div className="order-meta-row">
+                <span className="meta-label">Due Date</span>
+                <span className="meta-value">{selected.dueDate}</span>
+              </div>
+            )}
             <div className="order-meta-row">
               <span className="meta-label">Status</span>
               <div className="status-buttons">
