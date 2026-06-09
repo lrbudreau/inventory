@@ -106,14 +106,15 @@ export default function Parts({ readOnly = false }) {
       return 0;
     });
 
+  const [debugInfo, setDebugInfo] = useState("");
+
   function handleScan(barcode) {
     const clean = barcode.replace(/^[A-Z0-9_]+:/, "").trim();
     setShowScanner(false);
     setTimeout(() => {
-      console.log("Scanned:", JSON.stringify(clean));
-      console.log("Parts barcodes:", parts.map(p => JSON.stringify(p.barcode)));
+      const barcodes = parts.map(p => `"${p.barcode}"`).join(", ");
       const match = parts.find(p => p.barcode && p.barcode.trim() === clean);
-      console.log("Match:", match);
+      setDebugInfo(`Scanned: "${clean}" | Parts barcodes: ${barcodes} | Match: ${match ? match.name : "none"}`);
       if (match) {
         startEdit(match);
         showToast(`Found: ${match.name}`);
@@ -170,7 +171,12 @@ export default function Parts({ readOnly = false }) {
         </div>
       </div>
 
-      {/* Search row */}
+      {debugInfo && (
+        <div className="debug-banner" onClick={() => setDebugInfo("")}>
+          {debugInfo}
+          <span style={{float:"right", opacity:0.6}}>✕</span>
+        </div>
+      )}
       <div className="search-bar">
         <input
           ref={searchRef}
