@@ -106,15 +106,16 @@ export default function Parts({ readOnly = false }) {
       return 0;
     });
 
-  const [debugInfo, setDebugInfo] = useState("");
 
   function handleScan(barcode) {
     const clean = barcode.replace(/^[A-Z0-9_]+:/, "").trim();
     setShowScanner(false);
     setTimeout(() => {
-      const barcodes = parts.map(p => `"${p.barcode}"`).join(", ");
-      const match = parts.find(p => p.barcode && p.barcode.trim() === clean);
-      setDebugInfo(`Scanned: "${clean}" | Parts barcodes: ${barcodes} | Match: ${match ? match.name : "none"}`);
+      const match = parts.find(p => {
+        if (!p.barcode || String(p.barcode).trim() === "") return false;
+        const stored = String(p.barcode).trim();
+        return stored === clean || stored === clean.replace(/\D/g, "");
+      });
       if (match) {
         startEdit(match);
         showToast(`Found: ${match.name}`);
@@ -123,7 +124,7 @@ export default function Parts({ readOnly = false }) {
         setForm({ name:"", barcode:clean, quantity:0, min:0, vendorID:"", cost:0 });
         setDirty(false);
         setShowForm(true);
-        showToast(`No part found — add it now`);
+        showToast("No part found — fill in the details to add it");
       }
       setLastScanned(clean);
       setScanMode(false);
@@ -170,13 +171,6 @@ export default function Parts({ readOnly = false }) {
           {!readOnly && <button className="btn-primary" onClick={startAdd}>+ Add</button>}
         </div>
       </div>
-
-      {debugInfo && (
-        <div className="debug-banner" onClick={() => setDebugInfo("")}>
-          {debugInfo}
-          <span style={{float:"right", opacity:0.6}}>✕</span>
-        </div>
-      )}
       <div className="search-bar">
         <input
           ref={searchRef}
