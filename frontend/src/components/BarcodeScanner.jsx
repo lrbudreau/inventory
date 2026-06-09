@@ -15,10 +15,11 @@ export default function BarcodeScanner({ onScan, onClose }) {
         readerRef.current = new BrowserMultiFormatReader();
         setScanning(true);
         controls = await readerRef.current.decodeFromVideoDevice(
-          undefined, // use default camera
+          undefined,
           videoRef.current,
           (result, err) => {
             if (result) {
+              if (controls) controls.stop();
               onScan(result.getText());
             }
           }
