@@ -47,20 +47,18 @@ export default function Purchases({ currentUser }) {
         return String(p.barcode).trim() === clean;
       });
       if (match) {
-        // Pre-fill the form with matched part
-        const vendor = vendors.find(v => v.id == match.vendorID);
-        setForm(prev => ({ ...prev, partID: String(match.id), vendorID: match.vendorID || "", cost: match.cost || 0 }));
+        setForm(prev => ({ ...prev, partID: match.id, vendorID: match.vendorID || "", cost: match.cost || 0 }));
         setShowForm(true);
         showToast(`Found: ${match.name}`);
       } else {
         setShowForm(true);
-        showToast("No part found for that barcode — select manually");
+        showToast("No part found — select manually");
       }
     }, 100);
   }
 
   async function handleSave(e) {
-    setSaving(true);
+    e.preventDefault();
     await apiPost("purchases/create", { ...form, userID: currentUser?.id, username: currentUser?.username });
     setShowForm(false);
     setForm({ partID: "", quantity: 1, vendorID: "", date: new Date().toISOString().split("T")[0], notes: "", cost: 0 });
@@ -149,10 +147,19 @@ export default function Purchases({ currentUser }) {
                   {parts.map(p => <option key={p.id} value={p.id}>{p.name} (stock: {p.quantity})</option>)}
                 </select>
               </div>
-              <div className="field-row">
-                <div className="field"><label>Qty Ordered</label><input type="number" min="1" value={form.quantity} onChange={e => setForm({...form, quantity: Number(e.target.value)})} required /></div>
-                <div className="field"><label>Cost/unit ($)</label><input type="number" min="0" step="0.01" value={form.cost} onChange={e => setForm({...form, cost: Number(e.target.value)})} /></div>
+              <div className="field">
+                <label>Qty Ordered</label>
+                <div className="build-inline">
+                  <div className="qty-stepper">
+                    <button type="button" className="stepper-btn"
+                      onClick={() => setForm(f => ({...f, quantity: Math.max(1, f.quantity - 1)}))}>−</button>
+                    <span className="stepper-val">{form.quantity}</span>
+                    <button type="button" className="stepper-btn"
+                      onClick={() => setForm(f => ({...f, quantity: f.quantity + 1}))}>+</button>
+                  </div>
+                </div>
               </div>
+              <div className="field"><label>Cost/unit ($)</label><input type="number" min="0" step="0.01" value={form.cost} onChange={e => setForm({...form, cost: Number(e.target.value)})} placeholder="0.00" /></div>
               <div className="field"><label>Order Date</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required /></div>
               <div className="field">
                 <label>Vendor</label>
