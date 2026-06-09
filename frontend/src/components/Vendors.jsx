@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
+import { formatPhone } from "../utils";
 import { EditIcon, DeleteIcon, CloseIcon, EmailIcon, PhoneIcon, AddressIcon, CompanyIcon } from "./Icons";
 
 const EMPTY = { name:"", email:"", phone:"", website:"", address:"", city:"", state:"", zip:"" };
@@ -101,7 +102,7 @@ export default function Vendors() {
             <form onSubmit={handleSave} className="inline-form">
               <div className="field"><label>Vendor Name</label><input value={form.name} onChange={f("name")} placeholder="e.g. Steel Supply Co." required /></div>
               <div className="field"><label>Email</label><input type="email" value={form.email} onChange={f("email")} placeholder="orders@vendor.com" /></div>
-              <div className="field"><label>Phone</label><input type="tel" value={form.phone} onChange={f("phone")} placeholder="555-555-5555" /></div>
+              <div className="field"><label>Phone</label><input type="tel" value={form.phone} onChange={e => setForm({...form, phone: formatPhone(e.target.value)})} placeholder="555-555-5555" /></div>
               <div className="field"><label>Website</label><input type="url" value={form.website} onChange={f("website")} placeholder="https://vendor.com" /></div>
               <div className="field"><label>Street Address</label><input value={form.address} onChange={f("address")} placeholder="123 Main St." /></div>
               <div className="field-row">
