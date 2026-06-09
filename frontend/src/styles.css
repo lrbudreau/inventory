@@ -1682,18 +1682,22 @@ textarea { resize: vertical; }
 }
 
 @media print {
-  .invoice-toolbar { display: none !important; }
-  .invoice-overlay { position: static; }
-
-  /* Hide everything except the invoice when printing */
+  /* Hide app chrome */
   .sidebar,
   .mobile-header,
   .mobile-bottom-nav,
-  .main-content > *:not(.invoice-overlay),
   .toast-container,
-  .offline-bar {
+  .offline-bar,
+  .invoice-toolbar,
+  .page-header,
+  .order-meta,
+  .card,
+  .result-msg {
     display: none !important;
   }
+
+  /* Show invoice full page */
+  body { background: #fff !important; }
 
   .main-content {
     margin: 0 !important;
@@ -1702,10 +1706,11 @@ textarea { resize: vertical; }
 
   .invoice-overlay {
     position: static !important;
-    z-index: auto !important;
+    overflow: visible !important;
   }
 
   .invoice-body {
     padding: 0 !important;
+    display: block !important;
   }
 }
