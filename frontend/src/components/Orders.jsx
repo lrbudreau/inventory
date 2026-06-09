@@ -30,7 +30,7 @@ export default function Orders({ currentUser }) {
   const [parts, setParts] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("list"); // "list" | "detail"
+  const [view, setView] = useState("list");
   const [selected, setSelected] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -68,7 +68,6 @@ export default function Orders({ currentUser }) {
         ${!summary ? `<td>${built}</td><td>${remaining}</td>` : ""}
       </tr>`;
     }).join("");
-
     win.document.write(`
       <html><head><title>Order #${selected.orderNumber}</title>
       <style>
@@ -167,7 +166,7 @@ export default function Orders({ currentUser }) {
       setSelected({ ...selected, status: newStatus });
       setOrders(orders.map(o => o.id == selected.id ? { ...o, status: newStatus } : o));
       await load();
-      setBuildResult({ ok: true, message: `Built 1x ${getProductName(item.productID)}!` });
+      setBuildResult({ ok: true, message: `Built ${count}x ${getProductName(item.productID)}!` });
     } else {
       setBuildResult({ ok: false, message: "Build failed." });
     }
@@ -192,14 +191,8 @@ export default function Orders({ currentUser }) {
     setShowForm(true);
   }
 
-  function addProductLine() {
-    setProductLines([...productLines, { productID: "", quantity: 1 }]);
-  }
-
-  function removeProductLine(idx) {
-    setProductLines(productLines.filter((_, i) => i !== idx));
-  }
-
+  function addProductLine() { setProductLines([...productLines, { productID: "", quantity: 1 }]); }
+  function removeProductLine(idx) { setProductLines(productLines.filter((_, i) => i !== idx)); }
   function updateProductLine(idx, field, value) {
     setProductLines(productLines.map((l, i) => i === idx ? { ...l, [field]: value } : l));
   }
@@ -256,20 +249,17 @@ export default function Orders({ currentUser }) {
             </span>
           ) : "Orders"}
         </h1>
-        {view === "list" && (
-          <button className="btn-primary" onClick={openNewOrder}>+ New</button>
-        )}
+        {view === "list" && <button className="btn-primary" onClick={openNewOrder}>+ New</button>}
         {view === "detail" && selected && (
           <div style={{display:"flex", gap:6, alignItems:"center", flexWrap:"wrap"}}>
             {(() => { const d = daysUntil(selected.dueDate); const b = dueBadge(d); return b ? <span className={`badge ${b.cls}`}>{b.label}</span> : null; })()}
             <span className={`badge ${STATUS_COLORS[selected.status] || "badge-active"}`}>{selected.status}</span>
-            <button className="btn-print" onClick={() => printOrder(true)} title="Print summary">🖨 Summary</button>
-            <button className="btn-print" onClick={() => printOrder(false)} title="Print detail">🖨 Detail</button>
+            <button className="btn-print" onClick={() => printOrder(true)}>🖨 Summary</button>
+            <button className="btn-print" onClick={() => printOrder(false)}>🖨 Detail</button>
           </div>
         )}
       </div>
 
-      {/* New/Edit Order Modal */}
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -278,21 +268,13 @@ export default function Orders({ currentUser }) {
               <button className="modal-close" onClick={() => setShowForm(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSaveOrder} className="inline-form">
-              <div className="field">
-                <label>Order Number</label>
-                <input value={orderNumber} onChange={e => setOrderNumber(e.target.value)} placeholder="e.g. ORD-001" required />
-              </div>
-              <div className="field">
-                <label>Due Date (optional)</label>
-                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-              </div>
+              <div className="field"><label>Order Number</label><input value={orderNumber} onChange={e => setOrderNumber(e.target.value)} placeholder="e.g. ORD-001" required /></div>
+              <div className="field"><label>Due Date (optional)</label><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div>
               <div className="field">
                 <label>Company / Customer</label>
                 <select value={companyName} onChange={e => setCompanyName(e.target.value)} required>
                   <option value="">Select a company…</option>
-                  {companies.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               {!editingOrder && (
@@ -302,26 +284,13 @@ export default function Orders({ currentUser }) {
                     <div key={idx} className="part-line">
                       <select value={line.productID} onChange={e => updateProductLine(idx, "productID", e.target.value)} required>
                         <option value="">Select product…</option>
-                        {products.map(p => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
+                        {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
-                      <input
-                        type="number"
-                        min="1"
-                        value={line.quantity}
-                        onChange={e => updateProductLine(idx, "quantity", e.target.value)}
-                        className="qty-input"
-                        placeholder="Qty"
-                      />
-                      {productLines.length > 1 && (
-                        <button type="button" className="btn-icon" onClick={() => removeProductLine(idx)}><CloseIcon /></button>
-                      )}
+                      <input type="number" min="1" value={line.quantity} onChange={e => updateProductLine(idx, "quantity", e.target.value)} className="qty-input" placeholder="Qty" />
+                      {productLines.length > 1 && <button type="button" className="btn-icon" onClick={() => removeProductLine(idx)}><CloseIcon /></button>}
                     </div>
                   ))}
-                  <button type="button" className="btn-add-part" onClick={addProductLine}>
-                    + Add Another Product
-                  </button>
+                  <button type="button" className="btn-add-part" onClick={addProductLine}>+ Add Another Product</button>
                 </div>
               )}
               <div className="form-actions">
@@ -333,7 +302,6 @@ export default function Orders({ currentUser }) {
         </div>
       )}
 
-      {/* Delete Confirmation */}
       {confirmDelete && (
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
@@ -341,15 +309,12 @@ export default function Orders({ currentUser }) {
             <p className="confirm-text">Delete order <strong>#{confirmDelete.orderNumber}</strong>? This cannot be undone.</p>
             <div className="form-actions">
               <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>Cancel</button>
-              <button className="btn-danger" onClick={() => handleDeleteOrder(confirmDelete)} disabled={saving}>
-                {saving ? "Deleting…" : "Delete"}
-              </button>
+              <button className="btn-danger" onClick={() => handleDeleteOrder(confirmDelete)} disabled={saving}>{saving ? "Deleting…" : "Delete"}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Order List */}
       {view === "list" && (
         <div className="card no-pad">
           {loading ? <p className="loading pad">Loading…</p> : (
@@ -375,7 +340,6 @@ export default function Orders({ currentUser }) {
         </div>
       )}
 
-      {/* Order Detail */}
       {view === "detail" && selected && (
         <div>
           <div className="order-meta card">
@@ -393,13 +357,7 @@ export default function Orders({ currentUser }) {
               <span className="meta-label">Status</span>
               <div className="status-buttons">
                 {["Open", "In Progress", "Complete"].map(s => (
-                  <button
-                    key={s}
-                    className={`status-btn ${selected.status === s ? "active" : ""}`}
-                    onClick={() => handleStatusChange(s)}
-                  >
-                    {s}
-                  </button>
+                  <button key={s} className={`status-btn ${selected.status === s ? "active" : ""}`} onClick={() => handleStatusChange(s)}>{s}</button>
                 ))}
               </div>
             </div>
@@ -437,19 +395,17 @@ export default function Orders({ currentUser }) {
                     <div className="item-right">
                       {!done ? (
                         <div className="build-inline">
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            min="1"
-                            max={remaining}
-                            value={buildCounts[item.productID] || 1}
-                            onChange={e => {
-                              const val = parseInt(e.target.value) || 1;
-                              setBuildCounts({ ...buildCounts, [item.productID]: Math.min(val, remaining) });
-                            }}
-                            className="build-count-input"
-                          />
+                          <div className="qty-stepper">
+                            <button
+                              className="stepper-btn"
+                              onClick={() => setBuildCounts({ ...buildCounts, [item.productID]: Math.max(1, (buildCounts[item.productID] || 1) - 1) })}
+                            >−</button>
+                            <span className="stepper-val">{buildCounts[item.productID] || 1}</span>
+                            <button
+                              className="stepper-btn"
+                              onClick={() => setBuildCounts({ ...buildCounts, [item.productID]: Math.min((buildCounts[item.productID] || 1) + 1, remaining) })}
+                            >+</button>
+                          </div>
                           <button
                             className="btn-build-sm"
                             onClick={() => handleBuildForOrder(item)}
