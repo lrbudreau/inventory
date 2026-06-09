@@ -950,7 +950,7 @@ textarea { resize: vertical; }
 .build-inline {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .build-count-input {
@@ -1078,3 +1078,71 @@ textarea { resize: vertical; }
 
 .more-icon { font-size: 1rem; width: 20px; text-align: center; }
 .more-label { font-size: 0.9rem; }
+
+/* ===================== QTY STEPPER ===================== */
+.qty-stepper {
+  display: flex;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.stepper-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 700;
+  width: 32px;
+  height: 34px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.stepper-btn:hover { background: var(--border); color: var(--text); }
+.stepper-btn:active { background: var(--accent); color: #000; }
+
+.stepper-val {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+  padding: 0 4px;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+/* ===================== INVOICE / SETTINGS ===================== */
+.btn-invoice {
+  background: rgba(45,90,39,0.15);
+  border: 1px solid #2d5a27;
+  border-radius: var(--radius);
+  color: #4a9e42;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-invoice:hover { background: rgba(45,90,39,0.25); }
+
+.settings-logo-card { text-align: center; }
+.settings-logo {
+  max-width: 260px;
+  max-height: 100px;
+  object-fit: contain;
+  margin: 12px auto;
+  display: block;
+  background: #fff;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
