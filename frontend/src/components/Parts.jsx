@@ -107,13 +107,26 @@ export default function Parts({ readOnly = false }) {
     });
 
   function handleScan(barcode) {
-    // Strip any format prefix (e.g. "CODE128:") and trim whitespace
     const clean = barcode.replace(/^[A-Z0-9_]+:/, "").trim();
+    // Close scanner first, then update state after a tick to avoid unmount crash
     setShowScanner(false);
-    setSearch(clean);
-    setLastScanned(clean);
-    setScanMode(false);
-    showToast(`Scanned: ${clean}`);
+    setTimeout(() => {
+      const match = parts.find(p => p.barcode && p.barcode.trim() === clean);
+      if (match) {
+        // Found a matching part — open edit modal
+        startEdit(match);
+        showToast(`Found: ${match.name}`);
+      } else {
+        // No match — open add modal with barcode pre-filled
+        setEditingPart(null);
+        setForm({ name:"", barcode:clean, quantity:0, min:0, vendorID:"", cost:0 });
+        setDirty(false);
+        setShowForm(true);
+        showToast(`No part found — add it now`);
+      }
+      setLastScanned(clean);
+      setScanMode(false);
+    }, 100);
   }
 
   function handleFormScan(barcode) {
