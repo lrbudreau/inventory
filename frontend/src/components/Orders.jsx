@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
+import { showToast } from "./Toast";
 
 const STATUS_COLORS = {
   "Open":        "badge-active",
@@ -41,6 +42,7 @@ export default function Orders({ currentUser }) {
   const [productLines, setProductLines] = useState([{ productID: "", quantity: 1 }]);
   const [saving, setSaving] = useState(false);
   const [building, setBuilding] = useState(null);
+  const [filterStatus, setFilterStatus] = useState("all");
   const [buildCounts, setBuildCounts] = useState({});
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [buildResult, setBuildResult] = useState(null);
@@ -384,6 +386,7 @@ export default function Orders({ currentUser }) {
       }
     }
     setShowForm(false);
+    showToast(editingOrder ? "Order updated!" : "Order created!");
     await load();
     setSaving(false);
   }
@@ -392,6 +395,7 @@ export default function Orders({ currentUser }) {
     setSaving(true);
     await apiPost("orders/delete", { id: order.id });
     setConfirmDelete(null);
+    showToast("Order deleted.", "warn");
     if (selected?.id === order.id) { setSelected(null); setView("list"); }
     await load();
     setSaving(false);
@@ -489,10 +493,27 @@ export default function Orders({ currentUser }) {
       )}
 
       {view === "list" && (
+        <>
+        <div className="list-controls" style={{marginBottom:14}}>
+          <select className="control-select full-width" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value="all">All Orders</option>
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Complete">Complete</option>
+          </select>
+        </div>
         <div className="card no-pad">
-          {loading ? <p className="loading pad">Loading…</p> : (
+          {loading ? <p className="loading pad">Loading…</p> : (() => {
+            const filtered = orders.filter(o => filterStatus === "all" || o.status === filterStatus);
+            return filtered.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">▦</div>
+                <div className="empty-state-text">{filterStatus !== "all" ? `No ${filterStatus} orders` : "No orders yet"}</div>
+                {filterStatus === "all" && <div className="empty-state-hint">Tap + New to create your first order</div>}
+              </div>
+            ) : (
             <ul className="item-list">
-              {orders.map(o => (
+              {filtered.map(o => (
                 <li key={o.id} className="item-row">
                   <button className="item-btn" onClick={() => selectOrder(o)}>
                     <div className="item-main">
@@ -507,10 +528,12 @@ export default function Orders({ currentUser }) {
                   </div>
                 </li>
               ))}
-              {orders.length === 0 && <li className="empty pad">No orders yet.</li>}
+              ))}
             </ul>
-          )}
+            );
+          })()}
         </div>
+        </>
       )}
 
       {view === "detail" && selected && (
