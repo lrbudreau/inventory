@@ -1558,3 +1558,64 @@ textarea { resize: vertical; }
   line-height: 1;
 }
 .btn-scan-inline:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===================== PURCHASES ===================== */
+.status-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.status-tab {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.status-tab:hover { border-color: var(--text-muted); color: var(--text); }
+.status-tab.active { background: rgba(245,158,11,0.15); border-color: var(--accent); color: var(--accent); }
+
+.tab-count {
+  background: var(--warn);
+  color: #000;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+}
+
+.tab-total {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.item-row-ordered {
+  border-left: 3px solid var(--warn);
+}
+
+.btn-deliver {
+  background: rgba(34,197,94,0.12);
+  border: 1px solid var(--success);
+  border-radius: var(--radius);
+  color: var(--success);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-deliver:hover { background: rgba(34,197,94,0.22); }
+.btn-deliver:disabled { opacity: 0.5; cursor: not-allowed; }
