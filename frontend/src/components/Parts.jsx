@@ -102,6 +102,7 @@ export default function Parts({ readOnly = false }) {
   function handleScan(barcode) {
     setShowScanner(false);
     setSearch(barcode);
+    setScanMode(false);
     showToast(`Scanned: ${barcode}`);
   }
 
@@ -146,18 +147,27 @@ export default function Parts({ readOnly = false }) {
         </div>
       </div>
 
-      {/* Search + Sort + Filter row */}
+      {/* Search row */}
+      <div className="search-bar">
+        <input
+          ref={searchRef}
+          className={`search-input full-width ${scanMode ? "scan-active" : ""}`}
+          placeholder={scanMode ? "Scan barcode…" : "Search parts…"}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+      {/* Sort + Filter row */}
       <div className="list-controls">
-        <input ref={searchRef} className={`search-input ${scanMode ? "scan-active" : ""}`} placeholder={scanMode ? "Scan barcode…" : "Search parts…"} value={search} onChange={e => setSearch(e.target.value)} style={{flex:1}} />
-        <select className="control-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
-          <option value="name">A–Z</option>
-          <option value="quantity">Qty</option>
-          <option value="status">Status</option>
+        <select className="control-select" style={{flex:1}} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+          <option value="name">Sort: A–Z</option>
+          <option value="quantity">Sort: Qty</option>
+          <option value="status">Sort: Status</option>
         </select>
-        <select className="control-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="all">All</option>
-          <option value="low">Low</option>
-          <option value="out">Out</option>
+        <select className="control-select" style={{flex:1}} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+          <option value="all">All Parts</option>
+          <option value="low">Low Stock</option>
+          <option value="out">Out of Stock</option>
         </select>
       </div>
 
