@@ -81,6 +81,20 @@ export default function Companies() {
     c.email?.toLowerCase().includes(search.toLowerCase())
   );
 
+  function f(field) { return e => setForm({ ...form, [field]: e.target.value }); }
+
+  function handlePlaceSelect(place) {
+    setForm(prev => ({
+      ...prev,
+      name:    place.name    || prev.name,
+      address: place.address || prev.address,
+      city:    place.city    || prev.city,
+      state:   place.state   || prev.state,
+      zip:     place.zip     || prev.zip,
+    }));
+    setShowLookup(false);
+  }
+
   return (
     <div className="page">
       <div className="page-header">
