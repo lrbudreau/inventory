@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { formatPhone } from "../utils";
 import { EditIcon, DeleteIcon, CloseIcon, EmailIcon, PhoneIcon, AddressIcon, CompanyIcon } from "./Icons";
+import PlaceLookup from "./PlaceLookup";
 
 const EMPTY = { name:"", email:"", phone:"", website:"", address:"", city:"", state:"", zip:"" };
 
@@ -20,6 +21,7 @@ export default function Vendors() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showLookup, setShowLookup] = useState(false);
   const [editingVendor, setEditingVendor] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -35,9 +37,21 @@ export default function Vendors() {
 
   useEffect(() => { load(); }, []);
 
-  function openNew() { setEditingVendor(null); setForm(EMPTY); setShowForm(true); }
+  function openNew() { setEditingVendor(null); setForm(EMPTY); setShowLookup(false); setShowForm(true); }
   function openEdit(v) { setEditingVendor(v); setForm({ name:v.name||"", email:v.email||"", phone:v.phone||"", website:v.website||"", address:v.address||"", city:v.city||"", state:v.state||"", zip:v.zip||"" }); setShowForm(true); }
   function f(field) { return e => setForm({ ...form, [field]: e.target.value }); }
+
+  function handlePlaceSelect(place) {
+    setForm(prev => ({
+      ...prev,
+      name:    place.name    || prev.name,
+      address: place.address || prev.address,
+      city:    place.city    || prev.city,
+      state:   place.state   || prev.state,
+      zip:     place.zip     || prev.zip,
+    }));
+    setShowLookup(false);
+  }
 
   async function handleSave(e) {
     e.preventDefault();
