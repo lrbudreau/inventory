@@ -114,6 +114,44 @@ export default function Dashboard() {
     return da - db;
   });
 
+  function printShoppingList() {
+    const win = window.open("", "_blank");
+    const rows = lowStock.map(p => {
+      const vendor = companies.find(c => c.id == p.vendorID);
+      const suggested = p.min > 0 ? Math.max(0, p.min * 2 - p.quantity) : "—";
+      return `<tr>
+        <td>${p.name}</td>
+        <td>${p.barcode || "—"}</td>
+        <td style="text-align:center">${p.quantity}</td>
+        <td style="text-align:center">${p.min || "—"}</td>
+        <td style="text-align:center">${suggested}</td>
+        <td>${vendor ? vendor.name : "—"}</td>
+      </tr>`;
+    }).join("");
+    win.document.write(`
+      <html><head><title>Shopping List</title>
+      <style>
+        body { font-family: sans-serif; padding: 24px; }
+        h1 { font-size: 1.4rem; margin-bottom: 4px; }
+        p { color: #666; margin-bottom: 16px; font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; border-bottom: 2px solid #333; padding: 8px 12px; font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        @media print { button { display:none; } }
+      </style></head>
+      <body>
+        <h1>Shopping List</h1>
+        <p>Generated ${new Date().toLocaleDateString()} · ${lowStock.length} parts need reordering</p>
+        <table>
+          <thead><tr><th>Part</th><th>Barcode</th><th>In Stock</th><th>Min</th><th>Order Qty</th><th>Vendor</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <br/><button onclick="window.print()">Print</button>
+      </body></html>
+    `);
+    win.document.close();
+  }
+
   if (loading) return <div className="loading pad">Loading dashboard…</div>;
 
   return (
@@ -211,7 +249,10 @@ export default function Dashboard() {
       {/* Low Stock */}
       {lowStock.length > 0 && (
         <div className="card alert-card">
-          <h2>⚠ Stock Alerts</h2>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+            <h2 style={{marginBottom:0}}>⚠ Stock Alerts</h2>
+            <button className="btn-print" onClick={printShoppingList}>🖨 Shopping List</button>
+          </div>
           <ul className="item-list">
             {lowStock.map(p => (
               <li key={p.id} className="item-row">
