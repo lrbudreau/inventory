@@ -12,6 +12,7 @@ import ChangePassword from "./components/ChangePassword";
 import Reorder from "./components/Reorder";
 import ActivityLog from "./components/ActivityLog";
 import MoreMenu from "./components/MoreMenu";
+import Settings from "./components/Settings";
 
 // First 4 shown in mobile bottom nav, rest in "More"
 const ADMIN_PRIMARY = [
@@ -28,6 +29,7 @@ const ADMIN_MORE = [
   { id: "companies",   label: "Companies",  icon: "◻" },
   { id: "activitylog", label: "Activity",   icon: "◷" },
   { id: "users",       label: "Users",      icon: "◉" },
+  { id: "settings",    label: "Settings",   icon: "◬" },
 ];
 
 const ADMIN_NAV = [...ADMIN_PRIMARY, ...ADMIN_MORE];
@@ -52,7 +54,7 @@ export default function App() {
 
   const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
-  const adminPages = ["build","purchases","reorder","vendors","companies","activitylog","users"];
+  const adminPages = ["build","purchases","reorder","vendors","companies","activitylog","users","settings"];
   const safePage = (!isAdmin && adminPages.includes(page)) ? "dashboard" : page;
 
   return (
@@ -114,6 +116,7 @@ export default function App() {
         {safePage === "companies"   && isAdmin && <Companies />}
         {safePage === "activitylog" && isAdmin && <ActivityLog />}
         {safePage === "users"       && isAdmin && <Users currentUser={user} />}
+        {safePage === "settings"    && isAdmin && <Settings />}
         {safePage === "password"    && <ChangePassword currentUser={user} />}
       </main>
     </div>
