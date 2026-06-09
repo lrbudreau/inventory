@@ -147,8 +147,9 @@ export default function Orders({ currentUser }) {
             <div class="party-detail">
               ${settings.companyAddress ? settings.companyAddress + "<br>" : ""}
               ${settings.companyCity || ""}<br>
-              ${settings.companyPhone ? "📞 " + settings.companyPhone + "<br>" : ""}
-              ${settings.companyEmail ? "✉ " + settings.companyEmail : ""}
+              ${settings.companyPhone ? "Phone: " + settings.companyPhone + "<br>" : ""}
+              ${settings.companyFax ? "Fax: " + settings.companyFax + "<br>" : ""}
+              ${settings.companyWebsite ? settings.companyWebsite.replace(/^https?:\/\//, "") : ""}
             </div>
           </div>
           <div class="party">
@@ -157,8 +158,8 @@ export default function Orders({ currentUser }) {
             <div class="party-detail">
               ${customer?.address ? customer.address + "<br>" : ""}
               ${[customer?.city, customer?.state, customer?.zip].filter(Boolean).join(", ")}
-              ${customer?.email ? "<br>✉ " + customer.email : ""}
-              ${customer?.phone ? "<br>📞 " + customer.phone : ""}
+              ${customer?.email ? "<br>" + customer.email : ""}
+              ${customer?.phone ? "<br>" + customer.phone : ""}
             </div>
           </div>
         </div>
