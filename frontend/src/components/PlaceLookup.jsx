@@ -59,17 +59,18 @@ export default function PlaceLookup({ onSelect }) {
 
   return (
     <div className="place-lookup">
-      <form onSubmit={handleSearch} className="place-search-row">
+      <div className="place-search-row">
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSearch(e)}
           placeholder="Search business name or address…"
           className="place-input"
         />
-        <button type="submit" className="btn-primary" disabled={loading}>
+        <button type="button" className="btn-primary" onClick={handleSearch} disabled={loading}>
           {loading ? "…" : "Search"}
         </button>
-      </form>
+      </div>
 
       {error && <p className="error-msg" style={{marginTop:8}}>{error}</p>}
 
