@@ -13,6 +13,8 @@ import Reorder from "./components/Reorder";
 import ActivityLog from "./components/ActivityLog";
 import MoreMenu from "./components/MoreMenu";
 import Settings from "./components/Settings";
+import { ToastContainer } from "./components/Toast";
+import OfflineBar from "./components/OfflineBar";
 
 // First 4 shown in mobile bottom nav, rest in "More"
 const ADMIN_PRIMARY = [
@@ -59,6 +61,8 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <ToastContainer />
+      <OfflineBar />
       <aside className="sidebar">
         <div className="sidebar-brand">
           <span className="brand-icon">⚙</span>
