@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { formatPhone } from "../utils";
 import { EditIcon, DeleteIcon, CloseIcon, EmailIcon, PhoneIcon, AddressIcon, CompanyIcon } from "./Icons";
-import PlaceLookup from "./PlaceLookup";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 const EMPTY = { name:"", email:"", phone:"", website:"", address:"", city:"", state:"", zip:"" };
 
@@ -21,7 +21,6 @@ export default function Vendors() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [showLookup, setShowLookup] = useState(false);
   const [editingVendor, setEditingVendor] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -37,7 +36,7 @@ export default function Vendors() {
 
   useEffect(() => { load(); }, []);
 
-  function openNew() { setEditingVendor(null); setForm(EMPTY); setShowLookup(false); setShowForm(true); }
+  function openNew() { setEditingVendor(null); setForm(EMPTY); setShowForm(true); }
   function openEdit(v) { setEditingVendor(v); setForm({ name:v.name||"", email:v.email||"", phone:v.phone||"", website:v.website||"", address:v.address||"", city:v.city||"", state:v.state||"", zip:v.zip||"" }); setShowForm(true); }
   function f(field) { return e => setForm({ ...form, [field]: e.target.value }); }
 
@@ -114,17 +113,19 @@ export default function Vendors() {
               <button className="modal-close" onClick={() => setShowForm(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSave} className="inline-form">
-              <button type="button" className="btn-lookup-toggle" onClick={() => setShowLookup(!showLookup)}>
-                {showLookup ? "▲ Hide Search" : "🔍 Search & Auto-fill Address"}
-              </button>
-              {showLookup && (
-                <PlaceLookup onSelect={handlePlaceSelect} />
-              )}
               <div className="field"><label>Vendor Name</label><input value={form.name} onChange={f("name")} placeholder="e.g. Steel Supply Co." required /></div>
               <div className="field"><label>Email</label><input type="email" value={form.email} onChange={f("email")} placeholder="orders@vendor.com" /></div>
               <div className="field"><label>Phone</label><input type="tel" value={form.phone} onChange={e => setForm({...form, phone: formatPhone(e.target.value)})} placeholder="555-555-5555" /></div>
               <div className="field"><label>Website</label><input type="url" value={form.website} onChange={f("website")} placeholder="https://vendor.com" /></div>
-              <div className="field"><label>Street Address</label><input value={form.address} onChange={f("address")} placeholder="123 Main St." /></div>
+              <div className="field">
+                <label>Street Address</label>
+                <AddressAutocomplete
+                  value={form.address}
+                  onChange={val => setForm({...form, address: val})}
+                  onSelect={place => setForm(prev => ({...prev, address: place.address, city: place.city, state: place.state, zip: place.zip}))}
+                  placeholder="Start typing an address…"
+                />
+              </div>
               <div className="field-row">
                 <div className="field"><label>City</label><input value={form.city} onChange={f("city")} placeholder="Indianapolis" /></div>
                 <div className="field field-sm"><label>State</label><input value={form.state} onChange={f("state")} placeholder="IN" maxLength={2} /></div>
