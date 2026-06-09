@@ -86,9 +86,16 @@ export default function Parts({ readOnly = false }) {
 
   function stockOrder(p) { return { danger:0, warn:1, ok:2 }[stockStatus(p)]; }
 
+  const [lastScanned, setLastScanned] = useState("");
+
   const filtered = parts
     .filter(p => {
-      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || (p.barcode && p.barcode.includes(search));
+      const searchTrim = search.trim();
+      const matchSearch = !searchTrim ||
+        p.name.toLowerCase().includes(searchTrim.toLowerCase()) ||
+        (p.barcode && p.barcode.trim() === searchTrim) ||
+        (p.barcode && p.barcode.trim().includes(searchTrim)) ||
+        (p.barcode && searchTrim.includes(p.barcode.trim()));
       const matchStatus = filterStatus === "all" || (filterStatus === "low" && stockStatus(p) === "warn") || (filterStatus === "out" && stockStatus(p) === "danger");
       return matchSearch && matchStatus;
     })
@@ -100,10 +107,13 @@ export default function Parts({ readOnly = false }) {
     });
 
   function handleScan(barcode) {
+    // Strip any format prefix (e.g. "CODE128:") and trim whitespace
+    const clean = barcode.replace(/^[A-Z0-9_]+:/, "").trim();
     setShowScanner(false);
-    setSearch(barcode);
+    setSearch(clean);
+    setLastScanned(clean);
     setScanMode(false);
-    showToast(`Scanned: ${barcode}`);
+    showToast(`Scanned: ${clean}`);
   }
 
   function handleFormScan(barcode) {
@@ -236,8 +246,15 @@ export default function Parts({ readOnly = false }) {
         {loading ? <p className="loading pad">Loading parts…</p> : filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">⬡</div>
-            <div className="empty-state-text">{search || filterStatus !== "all" ? "No parts match your search" : "No parts yet"}</div>
-            {!readOnly && !search && filterStatus === "all" && <div className="empty-state-hint">Tap + Add to create your first part</div>}
+            <div className="empty-state-text">
+              {lastScanned && search === lastScanned
+                ? `No part found with barcode "${lastScanned}"`
+                : search || filterStatus !== "all" ? "No parts match your search" : "No parts yet"}
+            </div>
+            {lastScanned && search === lastScanned
+              ? <div className="empty-state-hint">Try adding this part and use the scan button to set its barcode</div>
+              : !readOnly && !search && filterStatus === "all" && <div className="empty-state-hint">Tap + Add to create your first part</div>
+            }
           </div>
         ) : (
           <ul className="item-list">
