@@ -114,6 +114,12 @@ export default function Vendors() {
               <button className="modal-close" onClick={() => setShowForm(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSave} className="inline-form">
+              <button type="button" className="btn-lookup-toggle" onClick={() => setShowLookup(!showLookup)}>
+                {showLookup ? "▲ Hide Search" : "🔍 Search & Auto-fill Address"}
+              </button>
+              {showLookup && (
+                <PlaceLookup onSelect={handlePlaceSelect} />
+              )}
               <div className="field"><label>Vendor Name</label><input value={form.name} onChange={f("name")} placeholder="e.g. Steel Supply Co." required /></div>
               <div className="field"><label>Email</label><input type="email" value={form.email} onChange={f("email")} placeholder="orders@vendor.com" /></div>
               <div className="field"><label>Phone</label><input type="tel" value={form.phone} onChange={e => setForm({...form, phone: formatPhone(e.target.value)})} placeholder="555-555-5555" /></div>
