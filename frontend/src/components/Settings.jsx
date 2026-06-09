@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
+import { formatPhone } from "../utils";
 
 const LOGO_URL = "https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center";
 
@@ -9,7 +10,7 @@ export default function Settings() {
     companyAddress: "",
     companyCity: "",
     companyPhone: "",
-    companyEmail: "",
+    companyFax: "",
     companyWebsite: "",
   });
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ export default function Settings() {
           companyAddress: s.companyAddress || "",
           companyCity:    s.companyCity    || "",
           companyPhone:   s.companyPhone   || "",
-          companyEmail:   s.companyEmail   || "",
+          companyFax:     s.companyFax     || "",
           companyWebsite: s.companyWebsite || "",
         });
       }
@@ -81,11 +82,11 @@ export default function Settings() {
             </div>
             <div className="field">
               <label>Phone</label>
-              <input type="tel" value={form.companyPhone} onChange={f("companyPhone")} placeholder="555-555-5555" />
+              <input type="tel" value={form.companyPhone} onChange={e => setForm({...form, companyPhone: formatPhone(e.target.value)})} placeholder="555-555-5555" />
             </div>
             <div className="field">
-              <label>Email</label>
-              <input type="email" value={form.companyEmail} onChange={f("companyEmail")} placeholder="info@holscherproducts.com" />
+              <label>Fax</label>
+              <input type="tel" value={form.companyFax} onChange={e => setForm({...form, companyFax: formatPhone(e.target.value)})} placeholder="(765) 555-5555" />
             </div>
             <div className="field">
               <label>Website</label>
