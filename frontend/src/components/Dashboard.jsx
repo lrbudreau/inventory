@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiGet } from "../auth";
 
 function daysUntil(dateStr) {
@@ -18,6 +18,48 @@ function dueBadge(days) {
   return { label: `${days}d left`, cls: "badge-ok" };
 }
 
+// Simple bar chart for builds per week
+function BuildsChart({ purchases }) {
+  if (!purchases.length) return <p className="empty" style={{padding:"12px 0"}}>No restock data yet.</p>;
+
+  // Group purchases by week (last 8 weeks)
+  const now = new Date();
+  const weeks = Array.from({ length: 8 }, (_, i) => {
+    const start = new Date(now);
+    start.setDate(now.getDate() - (7 * (7 - i)));
+    start.setHours(0,0,0,0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { start, end, label: `${start.getMonth()+1}/${start.getDate()}`, total: 0 };
+  });
+
+  purchases.forEach(p => {
+    const d = new Date(p.date);
+    weeks.forEach(w => {
+      if (d >= w.start && d <= w.end) w.total += p.quantity;
+    });
+  });
+
+  const max = Math.max(...weeks.map(w => w.total), 1);
+
+  return (
+    <div className="builds-chart">
+      {weeks.map((w, i) => (
+        <div key={i} className="chart-col">
+          <div className="chart-bar-wrap">
+            <div
+              className="chart-bar"
+              style={{ height: `${Math.max(4, (w.total / max) * 100)}%` }}
+              title={`${w.total} units`}
+            />
+          </div>
+          <span className="chart-label">{w.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [parts, setParts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -26,54 +68,38 @@ export default function Dashboard() {
   const [purchases, setPurchases] = useState([]);
   const [orderItems, setOrderItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(null);
 
-  useEffect(() => {
-    async function load() {
-      const [p, o, c, pr, pu] = await Promise.all([
-        apiGet("parts"), apiGet("orders"), apiGet("companies"),
-        apiGet("products"), apiGet("purchases"),
-      ]);
-      const partsData = Array.isArray(p) ? p : [];
-      const ordersData = Array.isArray(o) ? o : [];
-      setParts(partsData);
-      setOrders(ordersData);
-      setCompanies(Array.isArray(c) ? c : []);
-      setProducts(Array.isArray(pr) ? pr : []);
-      setPurchases(Array.isArray(pu) ? pu : []);
+  const load = useCallback(async (showRefresh = false) => {
+    if (showRefresh) setRefreshing(true);
+    const [p, o, c, pr, pu] = await Promise.all([
+      apiGet("parts"), apiGet("orders"), apiGet("companies"),
+      apiGet("products"), apiGet("purchases"),
+    ]);
+    const partsData = Array.isArray(p) ? p : [];
+    const ordersData = Array.isArray(o) ? o : [];
+    setParts(partsData);
+    setOrders(ordersData);
+    setCompanies(Array.isArray(c) ? c : []);
+    setProducts(Array.isArray(pr) ? pr : []);
+    setPurchases(Array.isArray(pu) ? pu : []);
 
-      // Load order items for active orders
-      const active = ordersData.filter(o => o.status !== "Complete");
-      const allItems = await Promise.all(
-        active.map(o => apiGet("orderProducts", { orderID: o.id }))
-      );
-      setOrderItems(active.map((o, i) => ({ orderID: o.id, items: Array.isArray(allItems[i]) ? allItems[i] : [] })));
-      setLoading(false);
-    }
-    load();
+    const active = ordersData.filter(o => o.status !== "Complete");
+    const allItems = await Promise.all(active.map(o => apiGet("orderProducts", { orderID: o.id })));
+    setOrderItems(active.map((o, i) => ({ orderID: o.id, items: Array.isArray(allItems[i]) ? allItems[i] : [] })));
+    setLoading(false);
+    setRefreshing(false);
+    setLastRefresh(new Date());
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const lowStock = parts.filter(p => p.quantity === 0 || (p.min > 0 && p.quantity <= p.min));
   const activeOrders = orders.filter(o => o.status !== "Complete");
   const overdueOrders = activeOrders.filter(o => { const d = daysUntil(o.dueDate); return d !== null && d < 0; });
   const companyMap = Object.fromEntries(companies.map(c => [c.id, c.name]));
 
-  // Parts consumption rate — total used in purchases vs built
-  const consumption = parts.map(part => {
-    const totalPurchased = purchases.filter(p => p.partID == part.id).reduce((s, p) => s + p.quantity, 0);
-    return { ...part, totalPurchased };
-  }).filter(p => p.totalPurchased > 0).sort((a, b) => b.totalPurchased - a.totalPurchased).slice(0, 5);
-
-  // Estimated builds possible per product
-  function maxBuildsFor(productParts, partsData) {
-    if (!productParts.length) return 0;
-    return Math.min(...productParts.map(pp => {
-      const part = partsData.find(p => p.id == pp.partID);
-      if (!part || pp.quantity === 0) return 0;
-      return Math.floor(part.quantity / pp.quantity);
-    }));
-  }
-
-  // Active order progress
   function orderProgress(orderID) {
     const oi = orderItems.find(o => o.orderID == orderID);
     if (!oi || !oi.items.length) return 0;
@@ -82,16 +108,25 @@ export default function Dashboard() {
     return total > 0 ? Math.round((built/total)*100) : 0;
   }
 
-  if (loading) return <div className="loading pad">Loading dashboard…</div>;
-
   const sortedActiveOrders = [...activeOrders].sort((a, b) => {
     const da = daysUntil(a.dueDate) ?? 9999;
     const db = daysUntil(b.dueDate) ?? 9999;
     return da - db;
   });
 
+  if (loading) return <div className="loading pad">Loading dashboard…</div>;
+
   return (
     <div className="dashboard">
+      {/* Header with refresh */}
+      <div className="page-header">
+        <h1>Dashboard</h1>
+        <button className="btn-refresh" onClick={() => load(true)} disabled={refreshing} title="Refresh">
+          <span style={{display:"inline-block", animation: refreshing ? "spin-slow 0.8s linear infinite" : "none"}}>⟳</span>
+          {lastRefresh && <span className="refresh-time">{lastRefresh.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</span>}
+        </button>
+      </div>
+
       {/* Stats */}
       <div className="stats-row">
         <div className="stat-card">
@@ -112,14 +147,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Overdue alert */}
+      {/* Overdue */}
       {overdueOrders.length > 0 && (
         <div className="card alert-card">
           <h2>⚠ Overdue Orders</h2>
           <ul className="item-list">
             {overdueOrders.map(o => {
-              const days = daysUntil(o.dueDate);
-              const badge = dueBadge(days);
+              const badge = dueBadge(daysUntil(o.dueDate));
               return (
                 <li key={o.id} className="item-row">
                   <div className="item-main">
@@ -140,7 +174,11 @@ export default function Dashboard() {
       <div className="card">
         <h2>Active Orders</h2>
         {sortedActiveOrders.length === 0 ? (
-          <p className="empty">No active orders.</p>
+          <div className="empty-state">
+            <div className="empty-state-icon">▦</div>
+            <div className="empty-state-text">No active orders</div>
+            <div className="empty-state-hint">Go to Orders and tap + New to create one</div>
+          </div>
         ) : (
           <ul className="item-list">
             {sortedActiveOrders.map(o => {
@@ -190,25 +228,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Parts Consumption */}
-      {consumption.length > 0 && (
-        <div className="card">
-          <h2>Top Parts Used</h2>
-          <ul className="item-list">
-            {consumption.map(p => (
-              <li key={p.id} className="item-row">
-                <div className="item-main">
-                  <span className="item-name">{p.name}</span>
-                  <span className="item-sub">Current stock: {p.quantity}</span>
-                </div>
-                <div className="item-right">
-                  <span className="qty-badge ok">{p.totalPurchased} purchased</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Restock Activity Chart */}
+      <div className="card">
+        <h2>Restock Activity — Last 8 Weeks</h2>
+        <BuildsChart purchases={purchases} />
+      </div>
     </div>
   );
 }
