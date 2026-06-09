@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
+import { formatPhone } from "../utils";
 import { EditIcon, DeleteIcon, CloseIcon, EmailIcon, PhoneIcon, AddressIcon, CompanyIcon } from "./Icons";
 
 const EMPTY_FORM = { name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" };
@@ -130,7 +131,7 @@ export default function Companies() {
               </div>
               <div className="field">
                 <label>Phone</label>
-                <input type="tel" value={form.phone} onChange={f("phone")} placeholder="555-555-5555" />
+                <input type="tel" value={form.phone} onChange={e => setForm({...form, phone: formatPhone(e.target.value)})} placeholder="555-555-5555" />
               </div>
               <div className="field">
                 <label>Street Address</label>
