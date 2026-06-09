@@ -9,7 +9,6 @@ import Vendors from "./components/Vendors";
 import Purchases from "./components/Purchases";
 import Users from "./components/Users";
 import ChangePassword from "./components/ChangePassword";
-import Reorder from "./components/Reorder";
 import ActivityLog from "./components/ActivityLog";
 import MoreMenu from "./components/MoreMenu";
 import Settings from "./components/Settings";
@@ -25,8 +24,7 @@ const ADMIN_PRIMARY = [
 ];
 
 const ADMIN_MORE = [
-  { id: "purchases",   label: "Restock",    icon: "↑" },
-  { id: "reorder",     label: "Reorder",    icon: "◎" },
+  { id: "purchases",   label: "Purchases",  icon: "↑" },
   { id: "vendors",     label: "Vendors",    icon: "◫" },
   { id: "companies",   label: "Companies",  icon: "◻" },
   { id: "activitylog", label: "Activity",   icon: "◷" },
@@ -56,7 +54,7 @@ export default function App() {
 
   const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
-  const adminPages = ["build","purchases","reorder","vendors","companies","activitylog","users","settings"];
+  const adminPages = ["build","purchases","vendors","companies","activitylog","users","settings"];
   const safePage = (!isAdmin && adminPages.includes(page)) ? "dashboard" : page;
 
   return (
@@ -115,7 +113,6 @@ export default function App() {
         {safePage === "parts"       && <Parts readOnly={!isAdmin} />}
         {safePage === "build"       && isAdmin && <Build />}
         {safePage === "purchases"   && isAdmin && <Purchases currentUser={user} />}
-        {safePage === "reorder"     && isAdmin && <Reorder />}
         {safePage === "vendors"     && isAdmin && <Vendors />}
         {safePage === "companies"   && isAdmin && <Companies />}
         {safePage === "activitylog" && isAdmin && <ActivityLog />}
