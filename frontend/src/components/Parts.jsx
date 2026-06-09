@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
 import { showToast } from "./Toast";
+import BarcodeScanner from "./BarcodeScanner";
 
 export default function Parts({ readOnly = false }) {
   const [parts, setParts] = useState([]);
@@ -17,6 +18,8 @@ export default function Parts({ readOnly = false }) {
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [scanMode, setScanMode] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showFormScanner, setShowFormScanner] = useState(false);
   const searchRef = useRef(null);
 
   async function load() {
@@ -96,12 +99,49 @@ export default function Parts({ readOnly = false }) {
       return 0;
     });
 
+  function handleScan(barcode) {
+    setShowScanner(false);
+    setSearch(barcode);
+    showToast(`Scanned: ${barcode}`);
+  }
+
+  function handleFormScan(barcode) {
+    setShowFormScanner(false);
+    setForm(prev => ({ ...prev, barcode }));
+    setDirty(true);
+    showToast(`Barcode scanned: ${barcode}`);
+  }
+
   return (
     <div className="page">
+      {showScanner && (
+        <BarcodeScanner
+          onScan={handleScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+      {showFormScanner && (
+        <BarcodeScanner
+          onScan={handleFormScan}
+          onClose={() => setShowFormScanner(false)}
+        />
+      )}
       <div className="page-header">
         <h1>Parts</h1>
         <div style={{display:"flex", gap:8}}>
-          <button className={`btn-scan ${scanMode ? "active" : ""}`} onClick={() => { setScanMode(!scanMode); setSearch(""); }} title="Barcode scan mode">▣ Scan</button>
+          <button
+            className={`btn-scan ${scanMode ? "active" : ""}`}
+            onClick={() => {
+              // On mobile use camera, on desktop use keyboard scan mode
+              if (/Mobi|Android/i.test(navigator.userAgent)) {
+                setShowScanner(true);
+              } else {
+                setScanMode(!scanMode);
+                setSearch("");
+              }
+            }}
+            title="Barcode scan"
+          >▣ Scan</button>
           {!readOnly && <button className="btn-primary" onClick={startAdd}>+ Add</button>}
         </div>
       </div>
@@ -130,7 +170,22 @@ export default function Parts({ readOnly = false }) {
             </div>
             <form onSubmit={handleSave} className="inline-form">
               <div className="field"><label>Part Name</label><input value={form.name} onChange={e => { setForm({...form,name:e.target.value}); setDirty(true); }} placeholder="e.g. Steel Bracket" required /></div>
-              <div className="field"><label>Barcode (optional)</label><input value={form.barcode} onChange={e => { setForm({...form,barcode:e.target.value}); setDirty(true); }} placeholder="e.g. 123456789" /></div>
+              <div className="field">
+                <label>Barcode (optional)</label>
+                <div className="barcode-field">
+                  <input
+                    value={form.barcode}
+                    onChange={e => { setForm({...form,barcode:e.target.value}); setDirty(true); }}
+                    placeholder="e.g. 123456789"
+                  />
+                  <button
+                    type="button"
+                    className="btn-scan-inline"
+                    onClick={() => setShowFormScanner(true)}
+                    title="Scan barcode"
+                  >▣</button>
+                </div>
+              </div>
               <div className="field-row">
                 <div className="field"><label>Quantity</label><input type="number" min="0" value={form.quantity} onChange={e => { setForm({...form,quantity:Number(e.target.value)}); setDirty(true); }} /></div>
                 <div className="field"><label>Min Stock</label><input type="number" min="0" value={form.min} onChange={e => { setForm({...form,min:Number(e.target.value)}); setDirty(true); }} placeholder="0 = no alert" /></div>
