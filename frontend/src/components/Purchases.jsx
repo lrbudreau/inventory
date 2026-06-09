@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { DeleteIcon, CloseIcon } from "./Icons";
 import { showToast } from "./Toast";
+import BarcodeScanner from "./BarcodeScanner";
 
 export default function Purchases({ currentUser }) {
   const [purchases, setPurchases] = useState([]);
@@ -9,6 +10,7 @@ export default function Purchases({ currentUser }) {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [saving, setSaving] = useState(false);
   const [delivering, setDelivering] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -36,8 +38,28 @@ export default function Purchases({ currentUser }) {
   function getPartName(id) { const p = parts.find(p => p.id == id); return p ? p.name : `Part #${id}`; }
   function getVendorName(id) { const v = vendors.find(v => v.id == id); return v ? v.name : "—"; }
 
+  function handleScan(barcode) {
+    const clean = barcode.replace(/^[A-Z0-9_]+:/, "").trim();
+    setShowScanner(false);
+    setTimeout(() => {
+      const match = parts.find(p => {
+        if (!p.barcode || String(p.barcode).trim() === "") return false;
+        return String(p.barcode).trim() === clean;
+      });
+      if (match) {
+        // Pre-fill the form with matched part
+        const vendor = vendors.find(v => v.id == match.vendorID);
+        setForm(prev => ({ ...prev, partID: String(match.id), vendorID: match.vendorID || "", cost: match.cost || 0 }));
+        setShowForm(true);
+        showToast(`Found: ${match.name}`);
+      } else {
+        setShowForm(true);
+        showToast("No part found for that barcode — select manually");
+      }
+    }, 100);
+  }
+
   async function handleSave(e) {
-    e.preventDefault();
     setSaving(true);
     await apiPost("purchases/create", { ...form, userID: currentUser?.id, username: currentUser?.username });
     setShowForm(false);
@@ -77,12 +99,21 @@ export default function Purchases({ currentUser }) {
 
   return (
     <div className="page">
+      {showScanner && (
+        <BarcodeScanner
+          onScan={handleScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
       <div className="page-header">
         <h1>
           Purchases
           {orderedCount > 0 && <span className="pending-count">{orderedCount}</span>}
         </h1>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>+ Order</button>
+        <div style={{display:"flex", gap:8}}>
+          <button className="btn-scan" onClick={() => setShowScanner(true)} title="Scan to order">▣ Scan</button>
+          <button className="btn-primary" onClick={() => setShowForm(true)}>+ Order</button>
+        </div>
       </div>
 
       {/* Filter tabs */}
