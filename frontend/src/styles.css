@@ -1279,3 +1279,169 @@ textarea { resize: vertical; }
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+/* ===================== TOAST ===================== */
+.toast-container {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-h) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 10px 20px;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  animation: toast-in 0.2s ease;
+}
+
+.toast-ok   { border-color: var(--success); color: var(--success); }
+.toast-warn { border-color: var(--warn);    color: var(--warn); }
+.toast-fail { border-color: var(--danger);  color: var(--danger); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================== OFFLINE BAR ===================== */
+.offline-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  z-index: 600;
+}
+.offline-bar.offline { background: var(--danger); color: #fff; }
+.offline-bar.online  { background: var(--success); color: #fff; }
+
+/* ===================== EMPTY STATES ===================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+  gap: 6px;
+}
+
+.empty-state-icon {
+  font-size: 2rem;
+  color: var(--border);
+  margin-bottom: 4px;
+}
+
+.empty-state-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.empty-state-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* ===================== LIST CONTROLS ===================== */
+.list-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.control-select {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 8px 10px;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+.control-select:focus { border-color: var(--accent); }
+.control-select.full-width { width: 100%; }
+
+/* ===================== REFRESH BUTTON ===================== */
+.btn-refresh {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+.btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.refresh-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ===================== BUILDS CHART ===================== */
+.builds-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 100px;
+  padding: 8px 0 0;
+}
+
+.chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.chart-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.chart-bar {
+  width: 100%;
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+  opacity: 0.8;
+  transition: height 0.3s ease;
+  min-height: 4px;
+}
+
+.chart-label {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .toast-container {
+    bottom: 24px;
+  }
+}
