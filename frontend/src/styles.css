@@ -1445,3 +1445,116 @@ textarea { resize: vertical; }
     bottom: 24px;
   }
 }
+
+/* ===================== BARCODE SCANNER ===================== */
+.scanner-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 400;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.scanner-modal {
+  background: var(--bg2);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius) var(--radius) 0 0;
+  width: 100%;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+.scanner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--border);
+}
+
+.scanner-view {
+  position: relative;
+  background: #000;
+}
+
+.scanner-video {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  display: block;
+}
+
+.scanner-aim {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.scanner-line {
+  width: 70%;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: scan-line 2s ease-in-out infinite;
+}
+
+@keyframes scan-line {
+  0%, 100% { transform: translateY(-40px); opacity: 0.6; }
+  50%       { transform: translateY(40px);  opacity: 1; }
+}
+
+.scanner-hint {
+  text-align: center;
+  padding: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--bg2);
+}
+
+.scanner-error {
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+@media (min-width: 768px) {
+  .scanner-overlay { align-items: center; }
+  .scanner-modal { border-radius: var(--radius); max-width: 420px; }
+}
+
+/* ===================== BARCODE FIELD ===================== */
+.barcode-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.barcode-field input { flex: 1; }
+
+.btn-scan-inline {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 10px 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+  line-height: 1;
+}
+.btn-scan-inline:hover { border-color: var(--accent); color: var(--accent); }
