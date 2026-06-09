@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { formatPhone } from "../utils";
 import { EditIcon, DeleteIcon, CloseIcon, EmailIcon, PhoneIcon, AddressIcon, CompanyIcon } from "./Icons";
+import PlaceLookup from "./PlaceLookup";
 
 const EMPTY_FORM = { name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" };
 
@@ -10,6 +11,7 @@ export default function Companies() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showLookup, setShowLookup] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -121,6 +123,12 @@ export default function Companies() {
               <button className="modal-close" onClick={() => setShowForm(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSave} className="inline-form">
+              <button type="button" className="btn-lookup-toggle" onClick={() => setShowLookup(!showLookup)}>
+                {showLookup ? "▲ Hide Search" : "🔍 Search & Auto-fill Address"}
+              </button>
+              {showLookup && (
+                <PlaceLookup onSelect={handlePlaceSelect} />
+              )}
               <div className="field">
                 <label>Company Name</label>
                 <input value={form.name} onChange={f("name")} placeholder="e.g. Acme Co." required />
