@@ -1216,3 +1216,66 @@ textarea { resize: vertical; }
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+/* ===================== ADDRESS AUTOCOMPLETE ===================== */
+.autocomplete-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.autocomplete-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.autocomplete-input-wrap input {
+  width: 100%;
+  padding-right: 32px;
+}
+
+.autocomplete-spinner {
+  position: absolute;
+  right: 12px;
+  color: var(--text-muted);
+  font-size: 1rem;
+  animation: spin-slow 1s linear infinite;
+  pointer-events: none;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  list-style: none;
+  z-index: 300;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.autocomplete-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover { background: var(--bg3); }
+
+.autocomplete-street {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.autocomplete-detail {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
