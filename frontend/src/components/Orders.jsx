@@ -46,6 +46,7 @@ export default function Orders({ currentUser }) {
   const [buildCounts, setBuildCounts] = useState({});
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [buildResult, setBuildResult] = useState(null);
+  const [invoiceHTML, setInvoiceHTML] = useState(null); // for in-app invoice
 
   async function load() {
     const [o, pr, p, c] = await Promise.all([apiGet("orders"), apiGet("products"), apiGet("parts"), apiGet("companies")]);
@@ -74,164 +75,93 @@ export default function Orders({ currentUser }) {
       </tr>`;
     }).join("");
 
-    const win = window.open("", "_blank");
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Invoice ${invoiceNum}</title>
-        <style>
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #222; background: #fff; padding: 48px; }
-
-          /* HEADER */
-          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 3px solid #2d5a27; }
-          .logo { max-width: 220px; max-height: 80px; }
-          .invoice-title { text-align: right; }
-          .invoice-title h1 { font-size: 2rem; font-weight: 800; color: #2d5a27; letter-spacing: 0.05em; text-transform: uppercase; }
-          .invoice-title .inv-num { font-size: 1rem; color: #666; margin-top: 4px; }
-
-          /* FROM / TO */
-          .parties { display: flex; justify-content: space-between; margin-bottom: 32px; gap: 40px; }
-          .party { flex: 1; }
-          .party-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #2d5a27; margin-bottom: 8px; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; }
-          .party-name { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
-          .party-detail { color: #555; line-height: 1.6; }
-
-          /* META */
-          .meta-row { display: flex; gap: 40px; margin-bottom: 32px; }
-          .meta-item { }
-          .meta-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #2d5a27; margin-bottom: 4px; }
-          .meta-value { font-size: 0.95rem; font-weight: 600; }
-
-          /* TABLE */
-          table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
-          thead tr { background: #2d5a27; color: #fff; }
-          thead th { padding: 10px 14px; text-align: left; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-          tbody tr:nth-child(even) { background: #f7f7f7; }
-          tbody td { padding: 10px 14px; border-bottom: 1px solid #e8e8e8; }
-          tbody tr:last-child td { border-bottom: none; }
-
-          /* STATUS */
-          .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-          .status-complete { background: #e8f5e9; color: #2d5a27; border: 1px solid #2d5a27; }
-          .status-progress { background: #fff3e0; color: #e65100; border: 1px solid #e65100; }
-          .status-open { background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; }
-
-          /* FOOTER */
-          .footer { border-top: 2px solid #2d5a27; padding-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
-          .footer-note { color: #666; font-size: 0.82rem; max-width: 320px; line-height: 1.5; }
-          .footer-brand { text-align: right; font-size: 0.75rem; color: #999; }
-
-          @media print {
-            body { padding: 24px; }
-            .no-print { display: none !important; }
-            @page { margin: 0.5in; }
-          }
-        </style>
-      </head>
-      <body>
-
-        <!-- HEADER -->
-        <div class="header">
-          <img class="logo" src="https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center" alt="${settings.companyName || 'Company Logo'}" />
-          <div class="invoice-title">
-            <h1>Invoice</h1>
-            <div class="inv-num">${invoiceNum}</div>
+    const html = `
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #222; background: #fff; padding: 32px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 3px solid #2d5a27; }
+        .logo { max-width: 200px; max-height: 70px; }
+        .invoice-title { text-align: right; }
+        .invoice-title h1 { font-size: 1.8rem; font-weight: 800; color: #2d5a27; text-transform: uppercase; }
+        .invoice-title .inv-num { font-size: 0.95rem; color: #666; margin-top: 4px; }
+        .parties { display: flex; justify-content: space-between; margin-bottom: 28px; gap: 40px; }
+        .party { flex: 1; }
+        .party-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #2d5a27; margin-bottom: 6px; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; }
+        .party-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+        .party-detail { color: #555; line-height: 1.6; font-size: 0.88rem; }
+        .meta-row { display: flex; gap: 32px; margin-bottom: 28px; flex-wrap: wrap; }
+        .meta-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #2d5a27; margin-bottom: 4px; }
+        .meta-value { font-size: 0.9rem; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+        thead tr { background: #2d5a27; color: #fff; }
+        thead th { padding: 9px 12px; text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+        tbody tr:nth-child(even) { background: #f7f7f7; }
+        tbody td { padding: 9px 12px; border-bottom: 1px solid #e8e8e8; font-size: 0.88rem; }
+        .footer { border-top: 2px solid #2d5a27; padding-top: 16px; display: flex; justify-content: space-between; }
+        .footer-note { color: #666; font-size: 0.8rem; line-height: 1.5; }
+        .footer-brand { text-align: right; font-size: 0.72rem; color: #999; }
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+        .status-complete { background: #e8f5e9; color: #2d5a27; border: 1px solid #2d5a27; }
+        .status-progress { background: #fff3e0; color: #e65100; border: 1px solid #e65100; }
+        .status-open { background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; }
+        @media print { .no-print { display:none!important; } @page { margin: 0.5in; } }
+      </style>
+      <div class="header">
+        <img class="logo" src="https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center" alt="${settings.companyName || ''}" />
+        <div class="invoice-title">
+          <h1>Invoice</h1>
+          <div class="inv-num">${invoiceNum}</div>
+        </div>
+      </div>
+      <div class="parties">
+        <div class="party">
+          <div class="party-label">From</div>
+          <div class="party-name">${settings.companyName || ""}</div>
+          <div class="party-detail">
+            ${settings.companyAddress ? settings.companyAddress + "<br>" : ""}
+            ${settings.companyCity || ""}<br>
+            ${settings.companyPhone ? "Phone: " + settings.companyPhone + "<br>" : ""}
+            ${settings.companyFax ? "Fax: " + settings.companyFax : ""}
           </div>
         </div>
-
-        <!-- FROM / TO -->
-        <div class="parties">
-          <div class="party">
-            <div class="party-label">From</div>
-            <div class="party-name">${settings.companyName || ""}</div>
-            <div class="party-detail">
-              ${settings.companyAddress ? settings.companyAddress + "<br>" : ""}
-              ${settings.companyCity || ""}<br>
-              ${settings.companyPhone ? "Phone: " + settings.companyPhone + "<br>" : ""}
-              ${settings.companyFax ? "Fax: " + settings.companyFax + "<br>" : ""}
-              ${settings.companyWebsite ? settings.companyWebsite.replace(/^https?:\/\//, "") : ""}
-            </div>
-          </div>
-          <div class="party">
-            <div class="party-label">Bill To</div>
-            <div class="party-name">${customer?.name || selected.companyID}</div>
-            <div class="party-detail">
-              ${customer?.address ? customer.address + "<br>" : ""}
-              ${[customer?.city, customer?.state, customer?.zip].filter(Boolean).join(", ")}
-              ${customer?.email ? "<br>" + customer.email : ""}
-              ${customer?.phone ? "<br>" + customer.phone : ""}
-            </div>
+        <div class="party">
+          <div class="party-label">Bill To</div>
+          <div class="party-name">${customer?.name || selected.companyID}</div>
+          <div class="party-detail">
+            ${customer?.address ? customer.address + "<br>" : ""}
+            ${[customer?.city, customer?.state, customer?.zip].filter(Boolean).join(", ")}
+            ${customer?.email ? "<br>" + customer.email : ""}
+            ${customer?.phone ? "<br>" + customer.phone : ""}
           </div>
         </div>
+      </div>
+      <div class="meta-row">
+        <div><div class="meta-label">Invoice Date</div><div class="meta-value">${today}</div></div>
+        <div><div class="meta-label">Order Number</div><div class="meta-value">#${selected.orderNumber}</div></div>
+        ${selected.dueDate ? `<div><div class="meta-label">Due Date</div><div class="meta-value">${selected.dueDate}</div></div>` : ""}
+        <div><div class="meta-label">Status</div><div class="meta-value">
+          <span class="status-badge ${selected.status === "Complete" ? "status-complete" : selected.status === "In Progress" ? "status-progress" : "status-open"}">${selected.status}</span>
+        </div></div>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Product / Description</th>
+          <th style="text-align:center">Qty Ordered</th>
+          <th style="text-align:center">Qty Built</th>
+          <th style="text-align:center">Status</th>
+        </tr></thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+      <div class="footer">
+        <div class="footer-note">Thank you for your business!<br>${settings.companyWebsite ? settings.companyWebsite.replace(/^https?:\/\//, "") : ""}</div>
+        <div class="footer-brand">Generated by FabTrack<br>${today}</div>
+      </div>
+    `;
 
-        <!-- META -->
-        <div class="meta-row">
-          <div class="meta-item">
-            <div class="meta-label">Invoice Date</div>
-            <div class="meta-value">${today}</div>
-          </div>
-          <div class="meta-item">
-            <div class="meta-label">Order Number</div>
-            <div class="meta-value">#${selected.orderNumber}</div>
-          </div>
-          ${selected.dueDate ? `
-          <div class="meta-item">
-            <div class="meta-label">Due Date</div>
-            <div class="meta-value">${selected.dueDate}</div>
-          </div>` : ""}
-          <div class="meta-item">
-            <div class="meta-label">Status</div>
-            <div class="meta-value">
-              <span class="status-badge ${selected.status === "Complete" ? "status-complete" : selected.status === "In Progress" ? "status-progress" : "status-open"}">
-                ${selected.status}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- LINE ITEMS -->
-        <table>
-          <thead>
-            <tr>
-              <th>Product / Description</th>
-              <th style="text-align:center">Qty Ordered</th>
-              <th style="text-align:center">Qty Built</th>
-              <th style="text-align:center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemRows}
-          </tbody>
-        </table>
-
-        <!-- FOOTER -->
-        <div class="footer">
-          <div class="footer-note">
-            Thank you for your business!<br>
-            ${settings.companyWebsite ? `<a href="${settings.companyWebsite}" style="color:#2d5a27">${settings.companyWebsite.replace(/^https?:\/\//, "")}</a>` : ""}
-          </div>
-          <div class="footer-brand">
-            Generated by FabTrack<br>${today}
-          </div>
-        </div>
-
-        <br>
-        <div class="no-print" style="text-align:center; margin-top:24px">
-          <button onclick="window.print()" style="background:#2d5a27;color:#fff;border:none;padding:12px 32px;font-size:1rem;border-radius:6px;cursor:pointer;font-weight:700">
-            🖨 Print Invoice
-          </button>
-        </div>
-
-      </body>
-      </html>
-    `);
-    win.document.close();
+    setInvoiceHTML(html);
   }
 
   function printOrder(summary = true) {
-    const win = window.open("", "_blank");
     const company = companies.find(c => c.id == selected.companyID);
     const itemRows = orderItems.map(item => {
       const built = item.built || 0;
@@ -242,38 +172,36 @@ export default function Orders({ currentUser }) {
         ${!summary ? `<td>${built}</td><td>${remaining}</td>` : ""}
       </tr>`;
     }).join("");
-    win.document.write(`
-      <html><head><title>Order #${selected.orderNumber}</title>
+
+    const html = `
       <style>
         body { font-family: sans-serif; padding: 24px; color: #111; }
-        h1 { font-size: 1.5rem; margin-bottom: 4px; }
-        .meta { color: #555; font-size: 0.9rem; margin-bottom: 20px; }
+        h1 { font-size: 1.4rem; margin-bottom: 4px; }
+        .meta { color: #555; font-size: 0.88rem; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        th { text-align: left; border-bottom: 2px solid #333; padding: 8px 12px; font-size: 0.8rem; text-transform: uppercase; }
-        td { padding: 8px 12px; border-bottom: 1px solid #ddd; }
-        .footer { margin-top: 32px; font-size: 0.8rem; color: #999; }
-        @media print { button { display:none; } }
-      </style></head>
-      <body>
-        <h1>Order #${selected.orderNumber}</h1>
-        <div class="meta">
-          Customer: ${company?.name || selected.companyID} &nbsp;|&nbsp;
-          Status: ${selected.status} &nbsp;|&nbsp;
-          ${selected.dueDate ? `Due: ${selected.dueDate} &nbsp;|&nbsp;` : ""}
-          Printed: ${new Date().toLocaleDateString()}
-        </div>
-        <table>
-          <thead><tr>
-            <th>Product</th><th>Qty Ordered</th>
-            ${!summary ? "<th>Built</th><th>Remaining</th>" : ""}
-          </tr></thead>
-          <tbody>${itemRows}</tbody>
-        </table>
-        <div class="footer">FabTrack · Generated ${new Date().toLocaleString()}</div>
-        <br/><button onclick="window.print()">Print</button>
-      </body></html>
-    `);
-    win.document.close();
+        th { text-align: left; border-bottom: 2px solid #333; padding: 8px 12px; font-size: 0.78rem; text-transform: uppercase; }
+        td { padding: 8px 12px; border-bottom: 1px solid #ddd; font-size: 0.88rem; }
+        .footer { margin-top: 24px; font-size: 0.78rem; color: #999; }
+        @media print { .no-print { display:none; } }
+      </style>
+      <h1>Order #${selected.orderNumber}</h1>
+      <div class="meta">
+        Customer: ${company?.name || selected.companyID} &nbsp;|&nbsp;
+        Status: ${selected.status} &nbsp;|&nbsp;
+        ${selected.dueDate ? `Due: ${selected.dueDate} &nbsp;|&nbsp;` : ""}
+        Printed: ${new Date().toLocaleDateString()}
+      </div>
+      <table>
+        <thead><tr>
+          <th>Product</th><th>Qty Ordered</th>
+          ${!summary ? "<th>Built</th><th>Remaining</th>" : ""}
+        </tr></thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+      <div class="footer">FabTrack · Generated ${new Date().toLocaleString()}</div>
+    `;
+
+    setInvoiceHTML(html);
   }
 
   async function selectOrder(order) {
@@ -414,8 +342,22 @@ export default function Orders({ currentUser }) {
     return total > 0 ? Math.round((built / total) * 100) : 0;
   };
 
+  const filteredOrders = orders.filter(o => filterStatus === "all" || o.status === filterStatus);
+
   return (
     <div className="page">
+
+      {/* In-app invoice/print viewer */}
+      {invoiceHTML && (
+        <div className="invoice-overlay">
+          <div className="invoice-toolbar no-print">
+            <button className="btn-secondary" onClick={() => setInvoiceHTML(null)}>← Back</button>
+            <button className="btn-primary" onClick={() => window.print()}>🖨 Print</button>
+          </div>
+          <div className="invoice-body" dangerouslySetInnerHTML={{ __html: invoiceHTML }} />
+        </div>
+      )}
+
       <div className="page-header">
         <h1>
           {view === "detail" && selected ? (
@@ -494,45 +436,41 @@ export default function Orders({ currentUser }) {
 
       {view === "list" && (
         <>
-        <div className="list-controls" style={{marginBottom:14}}>
-          <select className="control-select full-width" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-            <option value="all">All Orders</option>
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Complete">Complete</option>
-          </select>
-        </div>
-        <div className="card no-pad">
-          {loading ? <p className="loading pad">Loading…</p> : (() => {
-            const filtered = orders.filter(o => filterStatus === "all" || o.status === filterStatus);
-            return filtered.length === 0 ? (
+          <div className="list-controls" style={{marginBottom:14}}>
+            <select className="control-select full-width" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+              <option value="all">All Orders</option>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Complete">Complete</option>
+            </select>
+          </div>
+          <div className="card no-pad">
+            {loading ? <p className="loading pad">Loading…</p> : filteredOrders.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-state-icon">▦</div>
                 <div className="empty-state-text">{filterStatus !== "all" ? `No ${filterStatus} orders` : "No orders yet"}</div>
                 {filterStatus === "all" && <div className="empty-state-hint">Tap + New to create your first order</div>}
               </div>
             ) : (
-            <ul className="item-list">
-              {filtered.map(o => (
-                <li key={o.id} className="item-row">
-                  <button className="item-btn" onClick={() => selectOrder(o)}>
-                    <div className="item-main">
-                      <span className="item-name">#{o.orderNumber}</span>
-                      <span className="item-sub">{getCompanyName(o.companyID)}</span>
+              <ul className="item-list">
+                {filteredOrders.map(o => (
+                  <li key={o.id} className="item-row">
+                    <button className="item-btn" onClick={() => selectOrder(o)}>
+                      <div className="item-main">
+                        <span className="item-name">#{o.orderNumber}</span>
+                        <span className="item-sub">{getCompanyName(o.companyID)}</span>
+                      </div>
+                    </button>
+                    <div className="item-right">
+                      <span className={`badge ${STATUS_COLORS[o.status] || "badge-active"}`}>{o.status || "Open"}</span>
+                      <button className="btn-icon" onClick={() => openEditOrder(o)}><EditIcon /></button>
+                      <button className="btn-icon" onClick={() => setConfirmDelete(o)}><DeleteIcon /></button>
                     </div>
-                  </button>
-                  <div className="item-right">
-                    <span className={`badge ${STATUS_COLORS[o.status] || "badge-active"}`}>{o.status || "Open"}</span>
-                    <button className="btn-icon" onClick={() => openEditOrder(o)}><EditIcon /></button>
-                    <button className="btn-icon" onClick={() => setConfirmDelete(o)}><DeleteIcon /></button>
-                  </div>
-                </li>
-              ))}
-              ))}
-            </ul>
-            );
-          })()}
-        </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </>
       )}
 
@@ -592,21 +530,11 @@ export default function Orders({ currentUser }) {
                       {!done ? (
                         <div className="build-inline">
                           <div className="qty-stepper">
-                            <button
-                              className="stepper-btn"
-                              onClick={() => setBuildCounts({ ...buildCounts, [item.productID]: Math.max(1, (buildCounts[item.productID] || 1) - 1) })}
-                            >−</button>
+                            <button className="stepper-btn" onClick={() => setBuildCounts({ ...buildCounts, [item.productID]: Math.max(1, (buildCounts[item.productID] || 1) - 1) })}>−</button>
                             <span className="stepper-val">{buildCounts[item.productID] || 1}</span>
-                            <button
-                              className="stepper-btn"
-                              onClick={() => setBuildCounts({ ...buildCounts, [item.productID]: Math.min((buildCounts[item.productID] || 1) + 1, remaining) })}
-                            >+</button>
+                            <button className="stepper-btn" onClick={() => setBuildCounts({ ...buildCounts, [item.productID]: Math.min((buildCounts[item.productID] || 1) + 1, remaining) })}>+</button>
                           </div>
-                          <button
-                            className="btn-build-sm"
-                            onClick={() => handleBuildForOrder(item)}
-                            disabled={building === item.productID}
-                          >
+                          <button className="btn-build-sm" onClick={() => handleBuildForOrder(item)} disabled={building === item.productID}>
                             {building === item.productID ? "…" : "Build"}
                           </button>
                         </div>
