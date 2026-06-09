@@ -1634,3 +1634,54 @@ textarea { resize: vertical; }
   cursor: pointer;
   line-height: 1.5;
 }
+
+/* ===================== IN-APP INVOICE VIEWER ===================== */
+.invoice-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 1000;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  color: #111;
+}
+
+.invoice-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #1a1a1a;
+  border-bottom: 3px solid #2d5a27;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.invoice-toolbar .btn-secondary {
+  background: #333;
+  border-color: #555;
+  color: #fff;
+}
+
+.invoice-toolbar .btn-primary {
+  background: #2d5a27;
+}
+
+.invoice-body {
+  flex: 1;
+  padding: 24px;
+  background: #fff;
+  color: #111;
+}
+
+@media print {
+  .invoice-toolbar { display: none !important; }
+  .invoice-overlay { position: static; }
+}
