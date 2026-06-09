@@ -1684,4 +1684,28 @@ textarea { resize: vertical; }
 @media print {
   .invoice-toolbar { display: none !important; }
   .invoice-overlay { position: static; }
+
+  /* Hide everything except the invoice when printing */
+  .sidebar,
+  .mobile-header,
+  .mobile-bottom-nav,
+  .main-content > *:not(.invoice-overlay),
+  .toast-container,
+  .offline-bar {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .invoice-overlay {
+    position: static !important;
+    z-index: auto !important;
+  }
+
+  .invoice-body {
+    padding: 0 !important;
+  }
 }
