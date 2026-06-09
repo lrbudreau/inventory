@@ -108,16 +108,16 @@ export default function Parts({ readOnly = false }) {
 
   function handleScan(barcode) {
     const clean = barcode.replace(/^[A-Z0-9_]+:/, "").trim();
-    // Close scanner first, then update state after a tick to avoid unmount crash
     setShowScanner(false);
     setTimeout(() => {
+      console.log("Scanned:", JSON.stringify(clean));
+      console.log("Parts barcodes:", parts.map(p => JSON.stringify(p.barcode)));
       const match = parts.find(p => p.barcode && p.barcode.trim() === clean);
+      console.log("Match:", match);
       if (match) {
-        // Found a matching part — open edit modal
         startEdit(match);
         showToast(`Found: ${match.name}`);
       } else {
-        // No match — open add modal with barcode pre-filled
         setEditingPart(null);
         setForm({ name:"", barcode:clean, quantity:0, min:0, vendorID:"", cost:0 });
         setDirty(false);
