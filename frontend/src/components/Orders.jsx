@@ -56,6 +56,177 @@ export default function Orders({ currentUser }) {
 
   useEffect(() => { load(); }, []);
 
+  async function printInvoice() {
+    const settings = await apiGet("settings");
+    const customer = companies.find(c => c.id == selected.companyID);
+    const invoiceNum = `INV-${selected.orderNumber}-${new Date().getFullYear()}`;
+    const today = new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+
+    const itemRows = orderItems.map(item => {
+      const built = item.built || 0;
+      return `<tr>
+        <td>${getProductName(item.productID)}</td>
+        <td style="text-align:center">${item.quantity}</td>
+        <td style="text-align:center">${built}</td>
+        <td style="text-align:center">${item.quantity - built > 0 ? `<span style="color:#c0392b">${item.quantity - built} remaining</span>` : '<span style="color:#27ae60">✓ Complete</span>'}</td>
+      </tr>`;
+    }).join("");
+
+    const win = window.open("", "_blank");
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice ${invoiceNum}</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #222; background: #fff; padding: 48px; }
+
+          /* HEADER */
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 3px solid #2d5a27; }
+          .logo { max-width: 220px; max-height: 80px; }
+          .invoice-title { text-align: right; }
+          .invoice-title h1 { font-size: 2rem; font-weight: 800; color: #2d5a27; letter-spacing: 0.05em; text-transform: uppercase; }
+          .invoice-title .inv-num { font-size: 1rem; color: #666; margin-top: 4px; }
+
+          /* FROM / TO */
+          .parties { display: flex; justify-content: space-between; margin-bottom: 32px; gap: 40px; }
+          .party { flex: 1; }
+          .party-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #2d5a27; margin-bottom: 8px; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; }
+          .party-name { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+          .party-detail { color: #555; line-height: 1.6; }
+
+          /* META */
+          .meta-row { display: flex; gap: 40px; margin-bottom: 32px; }
+          .meta-item { }
+          .meta-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #2d5a27; margin-bottom: 4px; }
+          .meta-value { font-size: 0.95rem; font-weight: 600; }
+
+          /* TABLE */
+          table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+          thead tr { background: #2d5a27; color: #fff; }
+          thead th { padding: 10px 14px; text-align: left; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+          tbody tr:nth-child(even) { background: #f7f7f7; }
+          tbody td { padding: 10px 14px; border-bottom: 1px solid #e8e8e8; }
+          tbody tr:last-child td { border-bottom: none; }
+
+          /* STATUS */
+          .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+          .status-complete { background: #e8f5e9; color: #2d5a27; border: 1px solid #2d5a27; }
+          .status-progress { background: #fff3e0; color: #e65100; border: 1px solid #e65100; }
+          .status-open { background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; }
+
+          /* FOOTER */
+          .footer { border-top: 2px solid #2d5a27; padding-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+          .footer-note { color: #666; font-size: 0.82rem; max-width: 320px; line-height: 1.5; }
+          .footer-brand { text-align: right; font-size: 0.75rem; color: #999; }
+
+          @media print {
+            body { padding: 24px; }
+            .no-print { display: none !important; }
+            @page { margin: 0.5in; }
+          }
+        </style>
+      </head>
+      <body>
+
+        <!-- HEADER -->
+        <div class="header">
+          <img class="logo" src="https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center" alt="${settings.companyName || 'Company Logo'}" />
+          <div class="invoice-title">
+            <h1>Invoice</h1>
+            <div class="inv-num">${invoiceNum}</div>
+          </div>
+        </div>
+
+        <!-- FROM / TO -->
+        <div class="parties">
+          <div class="party">
+            <div class="party-label">From</div>
+            <div class="party-name">${settings.companyName || ""}</div>
+            <div class="party-detail">
+              ${settings.companyAddress ? settings.companyAddress + "<br>" : ""}
+              ${settings.companyCity || ""}<br>
+              ${settings.companyPhone ? "📞 " + settings.companyPhone + "<br>" : ""}
+              ${settings.companyEmail ? "✉ " + settings.companyEmail : ""}
+            </div>
+          </div>
+          <div class="party">
+            <div class="party-label">Bill To</div>
+            <div class="party-name">${customer?.name || selected.companyID}</div>
+            <div class="party-detail">
+              ${customer?.address ? customer.address + "<br>" : ""}
+              ${[customer?.city, customer?.state, customer?.zip].filter(Boolean).join(", ")}
+              ${customer?.email ? "<br>✉ " + customer.email : ""}
+              ${customer?.phone ? "<br>📞 " + customer.phone : ""}
+            </div>
+          </div>
+        </div>
+
+        <!-- META -->
+        <div class="meta-row">
+          <div class="meta-item">
+            <div class="meta-label">Invoice Date</div>
+            <div class="meta-value">${today}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Order Number</div>
+            <div class="meta-value">#${selected.orderNumber}</div>
+          </div>
+          ${selected.dueDate ? `
+          <div class="meta-item">
+            <div class="meta-label">Due Date</div>
+            <div class="meta-value">${selected.dueDate}</div>
+          </div>` : ""}
+          <div class="meta-item">
+            <div class="meta-label">Status</div>
+            <div class="meta-value">
+              <span class="status-badge ${selected.status === "Complete" ? "status-complete" : selected.status === "In Progress" ? "status-progress" : "status-open"}">
+                ${selected.status}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- LINE ITEMS -->
+        <table>
+          <thead>
+            <tr>
+              <th>Product / Description</th>
+              <th style="text-align:center">Qty Ordered</th>
+              <th style="text-align:center">Qty Built</th>
+              <th style="text-align:center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemRows}
+          </tbody>
+        </table>
+
+        <!-- FOOTER -->
+        <div class="footer">
+          <div class="footer-note">
+            Thank you for your business!<br>
+            ${settings.companyWebsite ? `<a href="${settings.companyWebsite}" style="color:#2d5a27">${settings.companyWebsite.replace(/^https?:\/\//, "")}</a>` : ""}
+          </div>
+          <div class="footer-brand">
+            Generated by FabTrack<br>${today}
+          </div>
+        </div>
+
+        <br>
+        <div class="no-print" style="text-align:center; margin-top:24px">
+          <button onclick="window.print()" style="background:#2d5a27;color:#fff;border:none;padding:12px 32px;font-size:1rem;border-radius:6px;cursor:pointer;font-weight:700">
+            🖨 Print Invoice
+          </button>
+        </div>
+
+      </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
   function printOrder(summary = true) {
     const win = window.open("", "_blank");
     const company = companies.find(c => c.id == selected.companyID);
@@ -256,6 +427,7 @@ export default function Orders({ currentUser }) {
             <span className={`badge ${STATUS_COLORS[selected.status] || "badge-active"}`}>{selected.status}</span>
             <button className="btn-print" onClick={() => printOrder(true)}>🖨 Summary</button>
             <button className="btn-print" onClick={() => printOrder(false)}>🖨 Detail</button>
+            <button className="btn-invoice" onClick={printInvoice}>📄 Invoice</button>
           </div>
         )}
       </div>
