@@ -150,7 +150,12 @@ export default function Companies() {
               </div>
               <div className="field">
                 <label>Street Address</label>
-                <input value={form.address} onChange={f("address")} placeholder="123 Main St." />
+                <AddressAutocomplete
+                  value={form.address}
+                  onChange={val => setForm({...form, address: val})}
+                  onSelect={place => setForm(prev => ({...prev, address: place.address, city: place.city, state: place.state, zip: place.zip}))}
+                  placeholder="Start typing an address…"
+                />
               </div>
               <div className="field-row">
                 <div className="field">
