@@ -3,39 +3,55 @@ import { BrowserMultiFormatReader } from "@zxing/browser";
 
 export default function BarcodeScanner({ onScan, onClose }) {
   const videoRef = useRef(null);
-  const readerRef = useRef(null);
+  const controlsRef = useRef(null);
+  const scannedRef = useRef(false);
+  const onScanRef = useRef(onScan);
   const [error, setError] = useState("");
   const [scanning, setScanning] = useState(false);
 
+  // Keep onScan ref current so we never have stale closure
+  useEffect(() => { onScanRef.current = onScan; }, [onScan]);
+
   useEffect(() => {
-    let controls = null;
+    let cancelled = false;
 
     async function startScanner() {
       try {
-        readerRef.current = new BrowserMultiFormatReader();
+        const reader = new BrowserMultiFormatReader();
+        readerRef.current = reader;
         setScanning(true);
-        controls = await readerRef.current.decodeFromVideoDevice(
+
+        const controls = await reader.decodeFromVideoDevice(
           undefined,
           videoRef.current,
           (result, err) => {
-            if (result) {
-              if (controls) controls.stop();
-              onScan(result.getText());
+            if (result && !scannedRef.current && !cancelled) {
+              scannedRef.current = true;
+              // Stop camera first
+              try { controls.stop(); } catch(e) {}
+              // Then fire callback
+              onScanRef.current(result.getText());
             }
           }
         );
+        controlsRef.current = controls;
       } catch (e) {
-        setError("Could not access camera. Please allow camera permissions and try again.");
-        setScanning(false);
+        if (!cancelled) {
+          setError("Could not access camera. Please allow camera permissions and try again.");
+          setScanning(false);
+        }
       }
     }
 
     startScanner();
 
     return () => {
-      if (controls) controls.stop();
+      cancelled = true;
+      try { if (controlsRef.current) controlsRef.current.stop(); } catch(e) {}
     };
-  }, [onScan]);
+  }, []); // Empty deps — only run once
+
+  const readerRef = useRef(null);
 
   return (
     <div className="scanner-overlay" onClick={onClose}>
