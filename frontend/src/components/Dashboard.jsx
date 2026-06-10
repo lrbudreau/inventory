@@ -18,11 +18,8 @@ function dueBadge(days) {
   return { label: `${days}d left`, cls: "badge-ok" };
 }
 
-// Simple bar chart for builds per week
 function BuildsChart({ purchases }) {
   if (!purchases.length) return <p className="empty" style={{padding:"12px 0"}}>No restock data yet.</p>;
-
-  // Group purchases by week (last 8 weeks)
   const now = new Date();
   const weeks = Array.from({ length: 8 }, (_, i) => {
     const start = new Date(now);
@@ -32,26 +29,17 @@ function BuildsChart({ purchases }) {
     end.setDate(start.getDate() + 6);
     return { start, end, label: `${start.getMonth()+1}/${start.getDate()}`, total: 0 };
   });
-
   purchases.forEach(p => {
     const d = new Date(p.date);
-    weeks.forEach(w => {
-      if (d >= w.start && d <= w.end) w.total += p.quantity;
-    });
+    weeks.forEach(w => { if (d >= w.start && d <= w.end) w.total += p.quantity; });
   });
-
   const max = Math.max(...weeks.map(w => w.total), 1);
-
   return (
     <div className="builds-chart">
       {weeks.map((w, i) => (
         <div key={i} className="chart-col">
           <div className="chart-bar-wrap">
-            <div
-              className="chart-bar"
-              style={{ height: `${Math.max(4, (w.total / max) * 100)}%` }}
-              title={`${w.total} units`}
-            />
+            <div className="chart-bar" style={{ height: `${Math.max(4, (w.total / max) * 100)}%` }} title={`${w.total} units`} />
           </div>
           <span className="chart-label">{w.label}</span>
         </div>
@@ -61,11 +49,7 @@ function BuildsChart({ purchases }) {
 }
 
 export default function Dashboard() {
-  const [parts, setParts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [companies, setCompanies] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [purchases, setPurchases] = useState([]);
+  const [data, setData] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,21 +57,25 @@ export default function Dashboard() {
 
   const load = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
-    const [p, o, c, pr, pu] = await Promise.all([
-      apiGet("parts"), apiGet("orders"), apiGet("companies"),
-      apiGet("products"), apiGet("purchases"),
-    ]);
-    const partsData = Array.isArray(p) ? p : [];
-    const ordersData = Array.isArray(o) ? o : [];
-    setParts(partsData);
-    setOrders(ordersData);
-    setCompanies(Array.isArray(c) ? c : []);
-    setProducts(Array.isArray(pr) ? pr : []);
-    setPurchases(Array.isArray(pu) ? pu : []);
 
+    // Single batch call instead of 5 separate calls
+    const dash = await apiGet("dashboard");
+    if (!dash) return;
+
+    const ordersData = Array.isArray(dash.orders) ? dash.orders : [];
+    setData({
+      parts:     Array.isArray(dash.parts)     ? dash.parts     : [],
+      products:  Array.isArray(dash.products)  ? dash.products  : [],
+      orders:    ordersData,
+      companies: Array.isArray(dash.companies) ? dash.companies : [],
+      purchases: Array.isArray(dash.purchases) ? dash.purchases : [],
+    });
+
+    // Load order items for active orders
     const active = ordersData.filter(o => o.status !== "Complete");
     const allItems = await Promise.all(active.map(o => apiGet("orderProducts", { orderID: o.id })));
     setOrderItems(active.map((o, i) => ({ orderID: o.id, items: Array.isArray(allItems[i]) ? allItems[i] : [] })));
+
     setLoading(false);
     setRefreshing(false);
     setLastRefresh(new Date());
@@ -95,6 +83,9 @@ export default function Dashboard() {
 
   useEffect(() => { load(); }, [load]);
 
+  if (loading || !data) return <div className="loading pad">Loading dashboard…</div>;
+
+  const { parts, products, orders, companies, purchases } = data;
   const lowStock = parts.filter(p => p.quantity === 0 || (p.min > 0 && p.quantity <= p.min));
   const activeOrders = orders.filter(o => o.status !== "Complete");
   const overdueOrders = activeOrders.filter(o => { const d = daysUntil(o.dueDate); return d !== null && d < 0; });
@@ -104,8 +95,23 @@ export default function Dashboard() {
     const oi = orderItems.find(o => o.orderID == orderID);
     if (!oi || !oi.items.length) return 0;
     const total = oi.items.reduce((s, i) => s + i.quantity, 0);
-    const built = oi.items.reduce((s, i) => s + (i.built||0), 0);
+    const built  = oi.items.reduce((s, i) => s + (i.built||0), 0);
     return total > 0 ? Math.round((built/total)*100) : 0;
+  }
+
+  function printShoppingList() {
+    const win = window.open("", "_blank");
+    const rows = lowStock.map(p => {
+      const vendor = companies.find(c => c.id == p.vendorID);
+      const suggested = p.min > 0 ? Math.max(0, p.min * 2 - p.quantity) : "—";
+      return `<tr><td>${p.name}</td><td>${p.barcode||"—"}</td><td style="text-align:center">${p.quantity}</td><td style="text-align:center">${p.min||"—"}</td><td style="text-align:center">${suggested}</td><td>${vendor?vendor.name:"—"}</td></tr>`;
+    }).join("");
+    win.document.write(`<html><head><title>Shopping List</title>
+      <style>body{font-family:sans-serif;padding:24px}h1{font-size:1.4rem;margin-bottom:4px}p{color:#666;margin-bottom:16px;font-size:.9rem}table{width:100%;border-collapse:collapse}th{text-align:left;border-bottom:2px solid #333;padding:8px 12px;font-size:.8rem;text-transform:uppercase}td{padding:8px 12px;border-bottom:1px solid #eee}@media print{button{display:none}}</style></head>
+      <body><h1>Shopping List</h1><p>Generated ${new Date().toLocaleDateString()} · ${lowStock.length} parts need reordering</p>
+      <table><thead><tr><th>Part</th><th>Barcode</th><th>In Stock</th><th>Min</th><th>Order Qty</th><th>Vendor</th></tr></thead><tbody>${rows}</tbody></table>
+      <br/><button onclick="window.print()">Print</button></body></html>`);
+    win.document.close();
   }
 
   const sortedActiveOrders = [...activeOrders].sort((a, b) => {
@@ -114,49 +120,8 @@ export default function Dashboard() {
     return da - db;
   });
 
-  function printShoppingList() {
-    const win = window.open("", "_blank");
-    const rows = lowStock.map(p => {
-      const vendor = companies.find(c => c.id == p.vendorID);
-      const suggested = p.min > 0 ? Math.max(0, p.min * 2 - p.quantity) : "—";
-      return `<tr>
-        <td>${p.name}</td>
-        <td>${p.barcode || "—"}</td>
-        <td style="text-align:center">${p.quantity}</td>
-        <td style="text-align:center">${p.min || "—"}</td>
-        <td style="text-align:center">${suggested}</td>
-        <td>${vendor ? vendor.name : "—"}</td>
-      </tr>`;
-    }).join("");
-    win.document.write(`
-      <html><head><title>Shopping List</title>
-      <style>
-        body { font-family: sans-serif; padding: 24px; }
-        h1 { font-size: 1.4rem; margin-bottom: 4px; }
-        p { color: #666; margin-bottom: 16px; font-size: 0.9rem; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; border-bottom: 2px solid #333; padding: 8px 12px; font-size: 0.8rem; text-transform: uppercase; }
-        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
-        @media print { button { display:none; } }
-      </style></head>
-      <body>
-        <h1>Shopping List</h1>
-        <p>Generated ${new Date().toLocaleDateString()} · ${lowStock.length} parts need reordering</p>
-        <table>
-          <thead><tr><th>Part</th><th>Barcode</th><th>In Stock</th><th>Min</th><th>Order Qty</th><th>Vendor</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-        <br/><button onclick="window.print()">Print</button>
-      </body></html>
-    `);
-    win.document.close();
-  }
-
-  if (loading) return <div className="loading pad">Loading dashboard…</div>;
-
   return (
     <div className="dashboard">
-      {/* Header with refresh */}
       <div className="page-header">
         <h1>Dashboard</h1>
         <button className="btn-refresh" onClick={() => load(true)} disabled={refreshing} title="Refresh">
@@ -224,21 +189,21 @@ export default function Dashboard() {
               const badge = dueBadge(days);
               const pct = orderProgress(o.id);
               return (
-                <li key={o.id} className="item-row" style={{flexDirection:"column", alignItems:"stretch", gap:6}}>
-                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                <li key={o.id} className="item-row" style={{flexDirection:"column",alignItems:"stretch",gap:6}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div>
                       <span className="item-name">#{o.orderNumber}</span>
                       <span className="item-sub" style={{marginLeft:8}}>{companyMap[o.companyID] || o.companyID}</span>
                     </div>
-                    <div style={{display:"flex", gap:6, alignItems:"center"}}>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
                       {badge && <span className={`badge ${badge.cls}`}>{badge.label}</span>}
-                      <span className={`badge ${o.status === "In Progress" ? "badge-warn" : "badge-active"}`}>{o.status}</span>
+                      <span className={`badge ${o.status==="In Progress"?"badge-warn":"badge-active"}`}>{o.status}</span>
                     </div>
                   </div>
                   <div className="progress-bar-wrap">
                     <div className="progress-bar" style={{width:`${pct}%`}} />
                   </div>
-                  <span style={{fontSize:"0.72rem", color:"var(--text-muted)"}}>{pct}% built</span>
+                  <span style={{fontSize:"0.72rem",color:"var(--text-muted)"}}>{pct}% built</span>
                 </li>
               );
             })}
@@ -249,7 +214,7 @@ export default function Dashboard() {
       {/* Low Stock */}
       {lowStock.length > 0 && (
         <div className="card alert-card">
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
             <h2 style={{marginBottom:0}}>⚠ Stock Alerts</h2>
             <button className="btn-print" onClick={printShoppingList}>🖨 Shopping List</button>
           </div>
@@ -258,10 +223,10 @@ export default function Dashboard() {
               <li key={p.id} className="item-row">
                 <div className="item-main">
                   <span className="item-name">{p.name}</span>
-                  <span className="item-sub">{p.quantity === 0 ? "Out of stock" : `${p.quantity} left · min is ${p.min}`}</span>
+                  <span className="item-sub">{p.quantity===0?"Out of stock":`${p.quantity} left · min is ${p.min}`}</span>
                 </div>
                 <div className="item-right">
-                  <span className={`qty-badge ${p.quantity === 0 ? "danger" : "warn"}`}>{p.quantity === 0 ? "OUT" : p.quantity}</span>
+                  <span className={`qty-badge ${p.quantity===0?"danger":"warn"}`}>{p.quantity===0?"OUT":p.quantity}</span>
                 </div>
               </li>
             ))}
@@ -269,7 +234,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Restock Activity Chart */}
+      {/* Restock Chart */}
       <div className="card">
         <h2>Restock Activity — Last 8 Weeks</h2>
         <BuildsChart purchases={purchases} />
