@@ -6,12 +6,12 @@ import AddressAutocomplete from "./AddressAutocomplete";
 
 const EMPTY_FORM = { name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" };
 
-export default function Companies() {
-  const [companies, setCompanies] = useState([]);
+export default function Customers() {
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingCompany, setEditingCompany] = useState(null);
+  const [editingCustomer, setEditingCustomer] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -19,29 +19,29 @@ export default function Companies() {
   const [selected, setSelected] = useState(null);
 
   async function load() {
-    const c = await apiGet("companies");
-    setCompanies(Array.isArray(c) ? c : []);
+    const c = await apiGet("customers");
+    setCustomers(Array.isArray(c) ? c : []);
     setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
 
   function openNew() {
-    setEditingCompany(null);
+    setEditingCustomer(null);
     setForm(EMPTY_FORM);
     setShowForm(true);
   }
 
-  function openEdit(company) {
-    setEditingCompany(company);
+  function openEdit(customer) {
+    setEditingCustomer(customer);
     setForm({
-      name:    company.name    || "",
-      email:   company.email   || "",
-      phone:   company.phone   || "",
-      address: company.address || "",
-      city:    company.city    || "",
-      state:   company.state   || "",
-      zip:     company.zip     || "",
+      name:    customer.name    || "",
+      email:   customer.email   || "",
+      phone:   customer.phone   || "",
+      address: customer.address || "",
+      city:    customer.city    || "",
+      state:   customer.state   || "",
+      zip:     customer.zip     || "",
     });
     setShowForm(true);
   }
@@ -53,28 +53,28 @@ export default function Companies() {
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
-    if (editingCompany) {
-      await apiPost("companies/update", { id: editingCompany.id, ...form });
-      if (selected?.id === editingCompany.id) setSelected({ ...selected, ...form });
+    if (editingCustomer) {
+      await apiPost("customers/update", { id: editingCustomer.id, ...form });
+      if (selected?.id === editingCustomer.id) setSelected({ ...selected, ...form });
     } else {
-      await apiPost("companies/create", form);
+      await apiPost("customers/create", form);
     }
     setShowForm(false);
-    setEditingCompany(null);
+    setEditingCustomer(null);
     await load();
     setSaving(false);
   }
 
-  async function handleDelete(company) {
+  async function handleDelete(customer) {
     setSaving(true);
-    await apiPost("companies/delete", { id: company.id });
+    await apiPost("customers/delete", { id: customer.id });
     setConfirmDelete(null);
-    if (selected?.id === company.id) { setSelected(null); setView("list"); }
+    if (selected?.id === customer.id) { setSelected(null); setView("list"); }
     await load();
     setSaving(false);
   }
 
-  const filtered = companies.filter(c =>
+  const filtered = customers.filter(c =>
     c.name?.toLowerCase().includes(search.toLowerCase()) ||
     c.city?.toLowerCase().includes(search.toLowerCase()) ||
     c.email?.toLowerCase().includes(search.toLowerCase())
@@ -103,7 +103,7 @@ export default function Companies() {
               <button className="btn-back" onClick={() => setView("list")}>←</button>
               {selected.name}
             </span>
-          ) : "Companies"}
+          ) : "Customers"}
         </h1>
         {view === "list" && (
           <button className="btn-primary" onClick={openNew}>+ Add</button>
@@ -120,7 +120,7 @@ export default function Companies() {
         <div className="search-bar">
           <input
             className="search-input full-width"
-            placeholder="Search companies…"
+            placeholder="Search customers…"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -132,17 +132,17 @@ export default function Companies() {
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingCompany ? "Edit Company" : "New Company"}</h2>
+              <h2>{editingCustomer ? "Edit Customer" : "New Customer"}</h2>
               <button className="modal-close" onClick={() => setShowForm(false)}><CloseIcon /></button>
             </div>
             <form onSubmit={handleSave} className="inline-form">
               <div className="field">
-                <label>Company Name</label>
+                <label>Customer Name</label>
                 <input value={form.name} onChange={f("name")} placeholder="e.g. Acme Co." required />
               </div>
               <div className="field">
                 <label>Email</label>
-                <input type="email" value={form.email} onChange={f("email")} placeholder="contact@company.com" />
+                <input type="email" value={form.email} onChange={f("email")} placeholder="contact@customer.com" />
               </div>
               <div className="field">
                 <label>Phone</label>
@@ -184,7 +184,7 @@ export default function Companies() {
       {confirmDelete && (
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
-            <h2>Delete Company?</h2>
+            <h2>Delete Customer?</h2>
             <p className="confirm-text">Delete <strong>{confirmDelete.name}</strong>? This cannot be undone.</p>
             <div className="form-actions">
               <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>Cancel</button>
@@ -196,7 +196,7 @@ export default function Companies() {
         </div>
       )}
 
-      {/* Company List */}
+      {/* Customer List */}
       {view === "list" && (
         <div className="card no-pad">
           {loading ? <p className="loading pad">Loading…</p> : (
@@ -215,19 +215,19 @@ export default function Companies() {
                   </div>
                 </li>
               ))}
-              {filtered.length === 0 && <li className="empty pad">No companies found.</li>}
+              {filtered.length === 0 && <li className="empty pad">No customers found.</li>}
             </ul>
           )}
         </div>
       )}
 
-      {/* Company Detail */}
+      {/* Customer Detail */}
       {view === "detail" && selected && (
-        <div className="card company-detail">
+        <div className="card customer-detail">
           <div className="detail-row">
             <span className="detail-icon"><CompanyIcon /></span>
             <div>
-              <div className="detail-label">Company</div>
+              <div className="detail-label">Customer</div>
               <div className="detail-value">{selected.name}</div>
             </div>
           </div>
