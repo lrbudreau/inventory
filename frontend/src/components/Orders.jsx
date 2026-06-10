@@ -124,7 +124,7 @@ export default function Orders({ currentUser }) {
       <div class="parties">
         <div class="party">
           <div class="party-label">From</div>
-          <div class="party-name">${settings.customerName || ""}</div>
+          <div class="party-name">${settings.companyName || ""}</div>
           <div class="party-detail">
             ${settings.companyAddress ? settings.companyAddress + "<br>" : ""}
             ${settings.companyCity || ""}<br>
