@@ -354,7 +354,13 @@ export default function Orders({ currentUser }) {
         <div className="invoice-overlay">
           <div className="invoice-toolbar no-print">
             <button className="btn-secondary" onClick={() => { setInvoiceHTML(null); document.body.classList.remove("printing-overlay"); }}>← Back</button>
-            <button className="btn-primary" onClick={() => window.print()}>🖨 Print</button>
+            <button className="btn-primary" onClick={() => {
+              const win = window.open("", "_blank");
+              win.document.write(`<!DOCTYPE html><html><head><title>Invoice</title></head><body>${invoiceHTML}</body></html>`);
+              win.document.close();
+              win.focus();
+              setTimeout(() => win.print(), 500);
+            }}>🖨 Print</button>
           </div>
           <div className="invoice-body" dangerouslySetInnerHTML={{ __html: invoiceHTML }} />
         </div>
