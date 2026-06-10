@@ -1637,11 +1637,17 @@ textarea { resize: vertical; }
 
 /* ===================== IN-APP INVOICE VIEWER ===================== */
 .invoice-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: #fff;
-  color: #111;
-  min-height: 100vh;
+  z-index: 1000;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  color: #111;
 }
 
 /* When invoice is open, hide the app chrome */
