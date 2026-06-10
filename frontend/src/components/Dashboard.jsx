@@ -162,7 +162,22 @@ export default function Dashboard() {
         <div className="invoice-overlay">
           <div className="invoice-toolbar no-print">
             <button className="btn-secondary" onClick={() => { setShoppingListHTML(null); document.body.classList.remove("invoice-open"); }}>← Back</button>
-            <button className="btn-primary" onClick={() => window.print()}>🖨 Print</button>
+            <button className="btn-primary" onClick={() => {
+              const iframe = document.createElement("iframe");
+              iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+              document.body.appendChild(iframe);
+              iframe.contentDocument.open();
+              iframe.contentDocument.write(`<!DOCTYPE html><html><head><style>
+                body { font-family: sans-serif; padding: 24px; color: #111; }
+                @page { margin: 0.5in; }
+              </style></head><body>${shoppingListHTML}</body></html>`);
+              iframe.contentDocument.close();
+              iframe.contentWindow.focus();
+              setTimeout(() => {
+                iframe.contentWindow.print();
+                setTimeout(() => document.body.removeChild(iframe), 1000);
+              }, 500);
+            }}>🖨 Print</button>
           </div>
           <div className="invoice-body" dangerouslySetInnerHTML={{ __html: shoppingListHTML }} />
         </div>
