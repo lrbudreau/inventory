@@ -1682,38 +1682,17 @@ textarea { resize: vertical; }
 }
 
 @media print {
-  /* Hide app chrome */
-  .sidebar,
-  .mobile-header,
-  .mobile-bottom-nav,
-  .toast-container,
-  .offline-bar,
-  .invoice-toolbar,
-  .page-header,
-  .order-meta,
-  .card,
-  .result-msg,
-  .dashboard,
-  .page,
-  .stats-row {
-    display: none !important;
-  }
+  /* Hide everything by default */
+  body > * { display: none !important; }
 
-  /* Show invoice/shopping list full page */
-  body { background: #fff !important; }
-
-  .main-content {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  .invoice-overlay {
-    position: static !important;
-    overflow: visible !important;
-  }
-
-  .invoice-body {
-    padding: 0 !important;
-    display: block !important;
-  }
+  /* Then show only the invoice overlay */
+  #root { display: block !important; }
+  #root > * { display: none !important; }
+  #root .app-shell { display: block !important; }
+  .app-shell > * { display: none !important; }
+  .app-shell .main-content { display: block !important; margin: 0 !important; padding: 0 !important; }
+  .main-content > * { display: none !important; }
+  .main-content .invoice-overlay { display: flex !important; position: static !important; overflow: visible !important; }
+  .invoice-toolbar { display: none !important; }
+  .invoice-body { display: block !important; padding: 0 !important; }
 }
