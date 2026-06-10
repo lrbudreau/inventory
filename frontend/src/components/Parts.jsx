@@ -23,9 +23,10 @@ export default function Parts({ readOnly = false }) {
   const searchRef = useRef(null);
 
   async function load() {
-    const [p, v] = await Promise.all([apiGet("parts"), apiGet("vendors")]);
-    setParts(Array.isArray(p) ? p : []);
-    setVendors(Array.isArray(v) ? v : []);
+    const data = await apiGet("partsPage");
+    if (!data) return;
+    setParts(Array.isArray(data.parts) ? data.parts : []);
+    setVendors(Array.isArray(data.vendors) ? data.vendors : []);
     setLoading(false);
   }
 
