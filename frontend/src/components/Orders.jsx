@@ -49,11 +49,12 @@ export default function Orders({ currentUser }) {
   const [invoiceHTML, setInvoiceHTML] = useState(null); // for in-app invoice
 
   async function load() {
-    const [o, pr, p, c] = await Promise.all([apiGet("orders"), apiGet("products"), apiGet("parts"), apiGet("companies")]);
-    setOrders(Array.isArray(o) ? o : []);
-    setProducts(Array.isArray(pr) ? pr : []);
-    setParts(Array.isArray(p) ? p : []);
-    setCompanies(Array.isArray(c) ? c : []);
+    const data = await apiGet("ordersPage");
+    if (!data) return;
+    setOrders(Array.isArray(data.orders) ? data.orders : []);
+    setProducts(Array.isArray(data.products) ? data.products : []);
+    setParts(Array.isArray(data.parts) ? data.parts : []);
+    setCompanies(Array.isArray(data.companies) ? data.companies : []);
     setLoading(false);
   }
 
