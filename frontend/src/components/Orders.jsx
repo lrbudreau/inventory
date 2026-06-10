@@ -61,6 +61,7 @@ export default function Orders({ currentUser }) {
   useEffect(() => { load(); }, []);
 
   async function printInvoice() {
+    document.body.classList.add("printing-overlay");
     const settings = await apiGet("settings");
     const customer = customers.find(c => c.id == selected.customerID);
     const invoiceNum = `INV-${selected.orderNumber}-${new Date().getFullYear()}`;
@@ -352,7 +353,7 @@ export default function Orders({ currentUser }) {
       {invoiceHTML && (
         <div className="invoice-overlay">
           <div className="invoice-toolbar no-print">
-            <button className="btn-secondary" onClick={() => setInvoiceHTML(null)}>← Back</button>
+            <button className="btn-secondary" onClick={() => { setInvoiceHTML(null); document.body.classList.remove("printing-overlay"); }}>← Back</button>
             <button className="btn-primary" onClick={() => window.print()}>🖨 Print</button>
           </div>
           <div className="invoice-body" dangerouslySetInnerHTML={{ __html: invoiceHTML }} />
