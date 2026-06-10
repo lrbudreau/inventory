@@ -353,9 +353,8 @@ export default function Orders({ currentUser }) {
   const filteredOrders = orders.filter(o => filterStatus === "all" || o.status === filterStatus);
 
   return (
-    <div className="page">
-
-      {/* In-app invoice/print viewer */}
+    <>
+      {/* In-app invoice/print viewer — outside .page so invoice-open CSS doesn't hide it */}
       {invoiceHTML && (
         <div className="invoice-overlay">
           <div className="invoice-toolbar no-print">
@@ -381,7 +380,8 @@ export default function Orders({ currentUser }) {
         </div>
       )}
 
-      <div className="page-header">
+      <div className="page">
+        <div className="page-header">
         <h1>
           {view === "detail" && selected ? (
             <span>
@@ -573,6 +573,7 @@ export default function Orders({ currentUser }) {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
