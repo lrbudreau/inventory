@@ -1682,7 +1682,6 @@ textarea { resize: vertical; }
 }
 
 @media print {
-  /* When printing, hide app chrome */
   .sidebar,
   .mobile-header,
   .mobile-bottom-nav,
@@ -1691,26 +1690,7 @@ textarea { resize: vertical; }
   .invoice-toolbar {
     display: none !important;
   }
-
-  .main-content {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Hide page content when overlay is present */
-  body.printing-overlay .page,
-  body.printing-overlay .dashboard,
-  body.printing-overlay .stats-row {
-    display: none !important;
-  }
-
-  .invoice-overlay {
-    position: static !important;
-    overflow: visible !important;
-  }
-
-  .invoice-body {
-    padding: 0 !important;
-    display: block !important;
-  }
+  .main-content { margin: 0 !important; padding: 0 !important; }
+  .invoice-overlay { position: static !important; overflow: visible !important; }
+  .invoice-body { padding: 0 !important; }
 }
