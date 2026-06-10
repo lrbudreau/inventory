@@ -21,10 +21,11 @@ export default function Purchases({ currentUser }) {
   });
 
   async function load() {
-    const [pu, p, v] = await Promise.all([apiGet("purchases"), apiGet("parts"), apiGet("vendors")]);
-    setPurchases(Array.isArray(pu) ? pu : []);
-    setParts(Array.isArray(p) ? p : []);
-    setVendors(Array.isArray(v) ? v : []);
+    const data = await apiGet("purchasesPage");
+    if (!data) return;
+    setPurchases(Array.isArray(data.purchases) ? data.purchases : []);
+    setParts(Array.isArray(data.parts) ? data.parts : []);
+    setVendors(Array.isArray(data.vendors) ? data.vendors : []);
     setLoading(false);
   }
 
