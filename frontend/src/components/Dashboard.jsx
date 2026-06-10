@@ -117,19 +117,32 @@ export default function Dashboard() {
     }).join("");
 
     setShoppingListHTML(`
-      <h1 style="font-size:1.4rem;margin-bottom:4px;font-family:sans-serif">Shopping List</h1>
-      <p style="color:#666;margin-bottom:16px;font-size:.9rem;font-family:sans-serif">
-        Generated ${new Date().toLocaleDateString()} · ${lowStock.length} parts need reordering
-      </p>
-      <table style="width:100%;border-collapse:collapse;font-family:sans-serif">
+      <style>
+        body { font-family: sans-serif; color: #111; }
+        h1 { font-size: 1.4rem; margin-bottom: 4px; }
+        p { color: #666; margin-bottom: 16px; font-size: .9rem; }
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { background: #2d5a27; color: #fff; }
+        th { text-align: left; padding: 8px 12px; font-size: .8rem; text-transform: uppercase; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        @media print {
+          @page { margin: 0.5in; }
+          .sidebar, .mobile-header, .mobile-bottom-nav, .invoice-toolbar, .page, .dashboard, .stats-row { display: none !important; }
+          .main-content { margin: 0 !important; padding: 0 !important; }
+          .invoice-overlay { position: static !important; overflow: visible !important; background: #fff !important; }
+          .invoice-body { padding: 0 !important; }
+        }
+      </style>
+      <h1>Shopping List</h1>
+      <p>Generated ${new Date().toLocaleDateString()} · ${lowStock.length} parts need reordering</p>
+      <table>
         <thead>
-          <tr style="background:#2d5a27;color:#fff">
-            <th style="text-align:left;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Part</th>
-            <th style="text-align:left;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Barcode</th>
-            <th style="text-align:center;padding:8px 12px;font-size:.8rem;text-transform:uppercase">In Stock</th>
-            <th style="text-align:center;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Min</th>
-            <th style="text-align:center;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Order Qty</th>
-            <th style="text-align:left;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Vendor</th>
+          <tr>
+            <th>Part</th><th>Barcode</th>
+            <th style="text-align:center">In Stock</th>
+            <th style="text-align:center">Min</th>
+            <th style="text-align:center">Order Qty</th>
+            <th>Vendor</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
