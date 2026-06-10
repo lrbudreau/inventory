@@ -29,7 +29,7 @@ export default function Orders({ currentUser }) {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [parts, setParts] = useState([]);
-  const [companies, setCompanies] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("list");
   const [selected, setSelected] = useState(null);
@@ -37,7 +37,7 @@ export default function Orders({ currentUser }) {
   const [showForm, setShowForm] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
   const [orderNumber, setOrderNumber] = useState("");
-  const [companyName, setCompanyName] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [productLines, setProductLines] = useState([{ productID: "", quantity: 1 }]);
   const [saving, setSaving] = useState(false);
@@ -54,7 +54,7 @@ export default function Orders({ currentUser }) {
     setOrders(Array.isArray(data.orders) ? data.orders : []);
     setProducts(Array.isArray(data.products) ? data.products : []);
     setParts(Array.isArray(data.parts) ? data.parts : []);
-    setCompanies(Array.isArray(data.companies) ? data.companies : []);
+    setCustomers(Array.isArray(data.customers) ? data.customers : []);
     setLoading(false);
   }
 
@@ -62,7 +62,7 @@ export default function Orders({ currentUser }) {
 
   async function printInvoice() {
     const settings = await apiGet("settings");
-    const customer = companies.find(c => c.id == selected.companyID);
+    const customer = customers.find(c => c.id == selected.customerID);
     const invoiceNum = `INV-${selected.orderNumber}-${new Date().getFullYear()}`;
     const today = new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
 
@@ -108,7 +108,7 @@ export default function Orders({ currentUser }) {
         @media print { .no-print { display:none!important; } @page { margin: 0.5in; } }
       </style>
       <div class="header">
-        <img class="logo" src="https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center" alt="${settings.companyName || ''}" />
+        <img class="logo" src="https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center" alt="${settings.customerName || ''}" />
         <div class="invoice-title">
           <h1>Invoice</h1>
           <div class="inv-num">${invoiceNum}</div>
@@ -117,7 +117,7 @@ export default function Orders({ currentUser }) {
       <div class="parties">
         <div class="party">
           <div class="party-label">From</div>
-          <div class="party-name">${settings.companyName || ""}</div>
+          <div class="party-name">${settings.customerName || ""}</div>
           <div class="party-detail">
             ${settings.companyAddress ? settings.companyAddress + "<br>" : ""}
             ${settings.companyCity || ""}<br>
@@ -127,7 +127,7 @@ export default function Orders({ currentUser }) {
         </div>
         <div class="party">
           <div class="party-label">Bill To</div>
-          <div class="party-name">${customer?.name || selected.companyID}</div>
+          <div class="party-name">${customer?.name || selected.customerID}</div>
           <div class="party-detail">
             ${customer?.address ? customer.address + "<br>" : ""}
             ${[customer?.city, customer?.state, customer?.zip].filter(Boolean).join(", ")}
@@ -163,7 +163,7 @@ export default function Orders({ currentUser }) {
   }
 
   function printOrder(summary = true) {
-    const company = companies.find(c => c.id == selected.companyID);
+    const customer = customers.find(c => c.id == selected.customerID);
     const itemRows = orderItems.map(item => {
       const built = item.built || 0;
       const remaining = item.quantity - built;
@@ -187,7 +187,7 @@ export default function Orders({ currentUser }) {
       </style>
       <h1>Order #${selected.orderNumber}</h1>
       <div class="meta">
-        Customer: ${company?.name || selected.companyID} &nbsp;|&nbsp;
+        Customer: ${customer?.name || selected.customerID} &nbsp;|&nbsp;
         Status: ${selected.status} &nbsp;|&nbsp;
         ${selected.dueDate ? `Due: ${selected.dueDate} &nbsp;|&nbsp;` : ""}
         Printed: ${new Date().toLocaleDateString()}
@@ -218,9 +218,9 @@ export default function Orders({ currentUser }) {
     }
   }
 
-  function getCompanyName(companyID) {
-    const c = companies.find(c => c.id == companyID);
-    return c ? c.name : companyID;
+  function getCustomerName(customerID) {
+    const c = customers.find(c => c.id == customerID);
+    return c ? c.name : customerID;
   }
 
   function getProductName(productID) {
@@ -279,7 +279,7 @@ export default function Orders({ currentUser }) {
   function openNewOrder() {
     setEditingOrder(null);
     setOrderNumber("");
-    setCompanyName("");
+    setCustomerName("");
     setDueDate("");
     setProductLines([{ productID: "", quantity: 1 }]);
     setShowForm(true);
@@ -288,7 +288,7 @@ export default function Orders({ currentUser }) {
   function openEditOrder(order) {
     setEditingOrder(order);
     setOrderNumber(order.orderNumber);
-    setCompanyName(order.companyID);
+    setCustomerName(order.customerID);
     setDueDate(order.dueDate || "");
     setProductLines([{ productID: "", quantity: 1 }]);
     setShowForm(true);
@@ -304,9 +304,9 @@ export default function Orders({ currentUser }) {
     e.preventDefault();
     setSaving(true);
     if (editingOrder) {
-      await apiPost("orders/update", { id: editingOrder.id, orderNumber, companyID: companyName, status: editingOrder.status, dueDate });
+      await apiPost("orders/update", { id: editingOrder.id, orderNumber, customerID: customerName, status: editingOrder.status, dueDate });
     } else {
-      const res = await apiPost("orders/create", { orderNumber, companyID: companyName, dueDate });
+      const res = await apiPost("orders/create", { orderNumber, customerID: customerName, dueDate });
       const newOrderId = res.id;
       for (const line of productLines) {
         if (line.productID) {
@@ -331,7 +331,7 @@ export default function Orders({ currentUser }) {
   }
 
   async function handleStatusChange(newStatus) {
-    await apiPost("orders/update", { id: selected.id, orderNumber: selected.orderNumber, companyID: selected.companyID, status: newStatus });
+    await apiPost("orders/update", { id: selected.id, orderNumber: selected.orderNumber, customerID: selected.customerID, status: newStatus });
     setSelected({ ...selected, status: newStatus });
     setOrders(orders.map(o => o.id == selected.id ? { ...o, status: newStatus } : o));
   }
@@ -391,10 +391,10 @@ export default function Orders({ currentUser }) {
               <div className="field"><label>Order Number</label><input value={orderNumber} onChange={e => setOrderNumber(e.target.value)} placeholder="e.g. ORD-001" required /></div>
               <div className="field"><label>Due Date (optional)</label><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div>
               <div className="field">
-                <label>Company / Customer</label>
-                <select value={companyName} onChange={e => setCompanyName(e.target.value)} required>
-                  <option value="">Select a company…</option>
-                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <label>Customer</label>
+                <select value={customerName} onChange={e => setCustomerName(e.target.value)} required>
+                  <option value="">Select a customer…</option>
+                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               {!editingOrder && (
@@ -459,7 +459,7 @@ export default function Orders({ currentUser }) {
                     <button className="item-btn" onClick={() => selectOrder(o)}>
                       <div className="item-main">
                         <span className="item-name">#{o.orderNumber}</span>
-                        <span className="item-sub">{getCompanyName(o.companyID)}</span>
+                        <span className="item-sub">{getCustomerName(o.customerID)}</span>
                       </div>
                     </button>
                     <div className="item-right">
@@ -480,7 +480,7 @@ export default function Orders({ currentUser }) {
           <div className="order-meta card">
             <div className="order-meta-row">
               <span className="meta-label">Customer</span>
-              <span className="meta-value">{getCompanyName(selected.companyID)}</span>
+              <span className="meta-value">{getCustomerName(selected.customerID)}</span>
             </div>
             {selected.dueDate && (
               <div className="order-meta-row">
