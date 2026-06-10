@@ -1682,15 +1682,31 @@ textarea { resize: vertical; }
 }
 
 @media print {
+  /* Hide the entire app shell */
   .sidebar,
   .mobile-header,
   .mobile-bottom-nav,
   .toast-container,
   .offline-bar,
-  .invoice-toolbar {
+  .invoice-toolbar,
+  .page,
+  .dashboard {
     display: none !important;
   }
-  .main-content { margin: 0 !important; padding: 0 !important; }
-  .invoice-overlay { position: static !important; overflow: visible !important; }
-  .invoice-body { padding: 0 !important; }
+
+  /* Make the overlay static so it prints normally */
+  .invoice-overlay {
+    position: static !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .invoice-body {
+    padding: 0 !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 }
