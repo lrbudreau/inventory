@@ -27,7 +27,7 @@ const ADMIN_PRIMARY = [
 const ADMIN_MORE = [
   { id: "purchases",   label: "Purchases",  icon: "↑" },
   { id: "vendors",     label: "Vendors",    icon: "◫" },
-  { id: "customers",   label: "Customers",  icon: "◻" },
+  { id: "customers",   label: "Customers",  icon: "⊞" },
   { id: "activitylog", label: "Activity",   icon: "◷" },
   { id: "users",       label: "Users",      icon: "◉" },
   { id: "settings",    label: "Settings",   icon: "◬" },
@@ -38,7 +38,7 @@ const ADMIN_NAV = [...ADMIN_PRIMARY, ...ADMIN_MORE];
 const BASIC_NAV = [
   { id: "dashboard",  label: "Dashboard", icon: "◈" },
   { id: "orders",     label: "Orders",    icon: "▦" },
-  { id: "parts",      label: "Parts",     icon: "⬡" },
+  { id: "build",       label: "Products",   icon: "⚙" },
 ];
 
 export default function App() {
