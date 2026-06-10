@@ -54,6 +54,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [shoppingListHTML, setShoppingListHTML] = useState(null);
 
   const load = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -69,6 +70,7 @@ export default function Dashboard() {
       orders:    ordersData,
       customers: Array.isArray(dash.customers) ? dash.customers : [],
       purchases: Array.isArray(dash.purchases) ? dash.purchases : [],
+      vendors:   Array.isArray(dash.vendors)   ? dash.vendors   : [],
     });
 
     // Load order items for active orders
@@ -98,8 +100,6 @@ export default function Dashboard() {
     const built  = oi.items.reduce((s, i) => s + (i.built||0), 0);
     return total > 0 ? Math.round((built/total)*100) : 0;
   }
-
-  const [shoppingListHTML, setShoppingListHTML] = useState(null);
 
   function printShoppingList() {
     const rows = lowStock.map(p => {
