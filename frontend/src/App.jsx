@@ -12,6 +12,7 @@ import ChangePassword from "./components/ChangePassword";
 import ActivityLog from "./components/ActivityLog";
 import MoreMenu from "./components/MoreMenu";
 import Settings from "./components/Settings";
+import { saveSession, clearSession } from "./auth";
 import { ToastContainer } from "./components/Toast";
 import OfflineBar from "./components/OfflineBar";
 
@@ -47,8 +48,8 @@ export default function App() {
   });
   const [page, setPage] = useState("dashboard");
 
-  function handleLogin(u) { localStorage.setItem("fabtrack_user", JSON.stringify(u)); setUser(u); setPage("dashboard"); }
-  function handleLogout() { localStorage.removeItem("fabtrack_user"); setUser(null); setPage("dashboard"); }
+  function handleLogin(u) { saveSession(u); setUser(u); setPage("dashboard"); }
+  function handleLogout() { clearSession(); setUser(null); setPage("dashboard"); }
 
   if (!user) return <Login onLogin={handleLogin} />;
 
