@@ -85,7 +85,7 @@ export default function Dashboard() {
 
   if (loading || !data) return <div className="loading pad">Loading dashboard…</div>;
 
-  const { parts, products, orders, customers, purchases } = data;
+  const { parts, products, orders, customers, purchases, vendors = [] } = data;
   const lowStock = parts.filter(p => p.quantity === 0 || (p.min > 0 && p.quantity <= p.min));
   const activeOrders = orders.filter(o => o.status !== "Complete");
   const overdueOrders = activeOrders.filter(o => { const d = daysUntil(o.dueDate); return d !== null && d < 0; });
@@ -99,19 +99,41 @@ export default function Dashboard() {
     return total > 0 ? Math.round((built/total)*100) : 0;
   }
 
+  const [shoppingListHTML, setShoppingListHTML] = useState(null);
+
   function printShoppingList() {
-    const win = window.open("", "_blank");
     const rows = lowStock.map(p => {
-      const vendor = customers.find(c => c.id == p.vendorID);
+      const vendor = vendors.find(v => v.id == p.vendorID);
       const suggested = p.min > 0 ? Math.max(0, p.min * 2 - p.quantity) : "—";
-      return `<tr><td>${p.name}</td><td>${p.barcode||"—"}</td><td style="text-align:center">${p.quantity}</td><td style="text-align:center">${p.min||"—"}</td><td style="text-align:center">${suggested}</td><td>${vendor?vendor.name:"—"}</td></tr>`;
+      return `<tr>
+        <td>${p.name}</td>
+        <td>${p.barcode||"—"}</td>
+        <td style="text-align:center">${p.quantity}</td>
+        <td style="text-align:center">${p.min||"—"}</td>
+        <td style="text-align:center">${suggested}</td>
+        <td>${vendor ? vendor.name : "—"}</td>
+      </tr>`;
     }).join("");
-    win.document.write(`<html><head><title>Shopping List</title>
-      <style>body{font-family:sans-serif;padding:24px}h1{font-size:1.4rem;margin-bottom:4px}p{color:#666;margin-bottom:16px;font-size:.9rem}table{width:100%;border-collapse:collapse}th{text-align:left;border-bottom:2px solid #333;padding:8px 12px;font-size:.8rem;text-transform:uppercase}td{padding:8px 12px;border-bottom:1px solid #eee}@media print{button{display:none}}</style></head>
-      <body><h1>Shopping List</h1><p>Generated ${new Date().toLocaleDateString()} · ${lowStock.length} parts need reordering</p>
-      <table><thead><tr><th>Part</th><th>Barcode</th><th>In Stock</th><th>Min</th><th>Order Qty</th><th>Vendor</th></tr></thead><tbody>${rows}</tbody></table>
-      <br/><button onclick="window.print()">Print</button></body></html>`);
-    win.document.close();
+
+    setShoppingListHTML(`
+      <h1 style="font-size:1.4rem;margin-bottom:4px;font-family:sans-serif">Shopping List</h1>
+      <p style="color:#666;margin-bottom:16px;font-size:.9rem;font-family:sans-serif">
+        Generated ${new Date().toLocaleDateString()} · ${lowStock.length} parts need reordering
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-family:sans-serif">
+        <thead>
+          <tr style="background:#2d5a27;color:#fff">
+            <th style="text-align:left;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Part</th>
+            <th style="text-align:left;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Barcode</th>
+            <th style="text-align:center;padding:8px 12px;font-size:.8rem;text-transform:uppercase">In Stock</th>
+            <th style="text-align:center;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Min</th>
+            <th style="text-align:center;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Order Qty</th>
+            <th style="text-align:left;padding:8px 12px;font-size:.8rem;text-transform:uppercase">Vendor</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `);
   }
 
   const sortedActiveOrders = [...activeOrders].sort((a, b) => {
@@ -122,6 +144,15 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
+      {shoppingListHTML && (
+        <div className="invoice-overlay">
+          <div className="invoice-toolbar no-print">
+            <button className="btn-secondary" onClick={() => setShoppingListHTML(null)}>← Back</button>
+            <button className="btn-primary" onClick={() => window.print()}>🖨 Print</button>
+          </div>
+          <div className="invoice-body" dangerouslySetInnerHTML={{ __html: shoppingListHTML }} />
+        </div>
+      )}
       <div className="page-header">
         <h1>Dashboard</h1>
         <button className="btn-refresh" onClick={() => load(true)} disabled={refreshing} title="Refresh">
