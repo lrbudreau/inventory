@@ -106,7 +106,13 @@ export default function Orders({ currentUser }) {
         .status-complete { background: #e8f5e9; color: #2d5a27; border: 1px solid #2d5a27; }
         .status-progress { background: #fff3e0; color: #e65100; border: 1px solid #e65100; }
         .status-open { background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; }
-        @media print { .no-print { display:none!important; } @page { margin: 0.5in; } }
+        @media print {
+          @page { margin: 0.5in; }
+          .sidebar, .mobile-header, .mobile-bottom-nav, .invoice-toolbar, .page, .dashboard, .stats-row { display: none !important; }
+          .main-content { margin: 0 !important; padding: 0 !important; }
+          .invoice-overlay { position: static !important; overflow: visible !important; background: #fff !important; }
+          .invoice-body { padding: 0 !important; }
+        }
       </style>
       <div class="header">
         <img class="logo" src="https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center" alt="${settings.customerName || ''}" />
