@@ -102,7 +102,7 @@ export default function Dashboard() {
   }
 
   function printShoppingList() {
-    document.body.classList.add("printing-overlay");
+    document.body.classList.add("invoice-open");
     const rows = lowStock.map(p => {
       const vendor = vendors.find(v => v.id == p.vendorID);
       const suggested = p.min > 0 ? Math.max(0, p.min * 2 - p.quantity) : "—";
@@ -161,7 +161,7 @@ export default function Dashboard() {
       {shoppingListHTML && (
         <div className="invoice-overlay">
           <div className="invoice-toolbar no-print">
-            <button className="btn-secondary" onClick={() => { setShoppingListHTML(null); document.body.classList.remove("printing-overlay"); }}>← Back</button>
+            <button className="btn-secondary" onClick={() => { setShoppingListHTML(null); document.body.classList.remove("invoice-open"); }}>← Back</button>
             <button className="btn-primary" onClick={() => window.print()}>🖨 Print</button>
           </div>
           <div className="invoice-body" dangerouslySetInnerHTML={{ __html: shoppingListHTML }} />
