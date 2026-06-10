@@ -4,7 +4,7 @@ import Dashboard from "./components/Dashboard";
 import Parts from "./components/Parts";
 import Build from "./components/Build";
 import Orders from "./components/Orders";
-import Companies from "./components/Companies";
+import Customers from "./components/Customers";
 import Vendors from "./components/Vendors";
 import Purchases from "./components/Purchases";
 import Users from "./components/Users";
@@ -27,7 +27,7 @@ const ADMIN_PRIMARY = [
 const ADMIN_MORE = [
   { id: "purchases",   label: "Purchases",  icon: "↑" },
   { id: "vendors",     label: "Vendors",    icon: "◫" },
-  { id: "companies",   label: "Companies",  icon: "◻" },
+  { id: "customers",   label: "Customers",  icon: "◻" },
   { id: "activitylog", label: "Activity",   icon: "◷" },
   { id: "users",       label: "Users",      icon: "◉" },
   { id: "settings",    label: "Settings",   icon: "◬" },
@@ -55,7 +55,7 @@ export default function App() {
 
   const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
-  const adminPages = ["build","purchases","vendors","companies","activitylog","users","settings"];
+  const adminPages = ["build","purchases","vendors","customers","activitylog","users","settings"];
   const safePage = (!isAdmin && adminPages.includes(page)) ? "dashboard" : page;
 
   return (
@@ -115,7 +115,7 @@ export default function App() {
         {safePage === "build"       && isAdmin && <Build />}
         {safePage === "purchases"   && isAdmin && <Purchases currentUser={user} />}
         {safePage === "vendors"     && isAdmin && <Vendors />}
-        {safePage === "companies"   && isAdmin && <Companies />}
+        {safePage === "customers"   && isAdmin && <Customers />}
         {safePage === "activitylog" && isAdmin && <ActivityLog />}
         {safePage === "users"       && isAdmin && <Users currentUser={user} />}
         {safePage === "settings"    && isAdmin && <Settings />}
