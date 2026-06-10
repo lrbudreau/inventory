@@ -143,7 +143,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="dashboard">
+    <div>
       {shoppingListHTML && (
         <div className="invoice-overlay">
           <div className="invoice-toolbar no-print">
@@ -153,6 +153,7 @@ export default function Dashboard() {
           <div className="invoice-body" dangerouslySetInnerHTML={{ __html: shoppingListHTML }} />
         </div>
       )}
+    <div className="dashboard">
       <div className="page-header">
         <h1>Dashboard</h1>
         <button className="btn-refresh" onClick={() => load(true)} disabled={refreshing} title="Refresh">
@@ -270,6 +271,7 @@ export default function Dashboard() {
         <h2>Restock Activity — Last 8 Weeks</h2>
         <BuildsChart purchases={purchases} />
       </div>
+    </div>
     </div>
   );
 }
