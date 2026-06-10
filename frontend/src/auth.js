@@ -33,10 +33,9 @@ export async function apiGet(resource, params = {}) {
   url.searchParams.set("resource", resource);
   const authParams = withAuth(params);
   for (const k in authParams) url.searchParams.set(k, authParams[k]);
-  const res = await fetch(url.toString(), { method: "GET" });
+  const res = await fetch(url.toString(), { method: "GET", redirect: "follow" });
   const data = await res.json();
   if (data?.code === 401) {
-    // Session expired — clear and reload to login screen
     clearSession();
     window.location.reload();
     return null;
@@ -54,7 +53,7 @@ export async function apiPost(resource, data = {}) {
       url.searchParams.set(k, authData[k]);
     }
   }
-  const res = await fetch(url.toString(), { method: "GET" });
+  const res = await fetch(url.toString(), { method: "GET", redirect: "follow" });
   const result = await res.json();
   if (result?.code === 401) {
     clearSession();
