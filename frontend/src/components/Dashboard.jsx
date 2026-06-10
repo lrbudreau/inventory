@@ -67,7 +67,7 @@ export default function Dashboard() {
       parts:     Array.isArray(dash.parts)     ? dash.parts     : [],
       products:  Array.isArray(dash.products)  ? dash.products  : [],
       orders:    ordersData,
-      companies: Array.isArray(dash.companies) ? dash.companies : [],
+      customers: Array.isArray(dash.customers) ? dash.customers : [],
       purchases: Array.isArray(dash.purchases) ? dash.purchases : [],
     });
 
@@ -85,11 +85,11 @@ export default function Dashboard() {
 
   if (loading || !data) return <div className="loading pad">Loading dashboard…</div>;
 
-  const { parts, products, orders, companies, purchases } = data;
+  const { parts, products, orders, customers, purchases } = data;
   const lowStock = parts.filter(p => p.quantity === 0 || (p.min > 0 && p.quantity <= p.min));
   const activeOrders = orders.filter(o => o.status !== "Complete");
   const overdueOrders = activeOrders.filter(o => { const d = daysUntil(o.dueDate); return d !== null && d < 0; });
-  const companyMap = Object.fromEntries(companies.map(c => [c.id, c.name]));
+  const customerMap = Object.fromEntries(customers.map(c => [c.id, c.name]));
 
   function orderProgress(orderID) {
     const oi = orderItems.find(o => o.orderID == orderID);
@@ -102,7 +102,7 @@ export default function Dashboard() {
   function printShoppingList() {
     const win = window.open("", "_blank");
     const rows = lowStock.map(p => {
-      const vendor = companies.find(c => c.id == p.vendorID);
+      const vendor = customers.find(c => c.id == p.vendorID);
       const suggested = p.min > 0 ? Math.max(0, p.min * 2 - p.quantity) : "—";
       return `<tr><td>${p.name}</td><td>${p.barcode||"—"}</td><td style="text-align:center">${p.quantity}</td><td style="text-align:center">${p.min||"—"}</td><td style="text-align:center">${suggested}</td><td>${vendor?vendor.name:"—"}</td></tr>`;
     }).join("");
@@ -161,7 +161,7 @@ export default function Dashboard() {
                 <li key={o.id} className="item-row">
                   <div className="item-main">
                     <span className="item-name">#{o.orderNumber}</span>
-                    <span className="item-sub">{companyMap[o.companyID] || o.companyID}</span>
+                    <span className="item-sub">{customerMap[o.customerID] || o.customerID}</span>
                   </div>
                   <div className="item-right">
                     <span className={`badge ${badge.cls}`}>{badge.label}</span>
@@ -193,7 +193,7 @@ export default function Dashboard() {
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div>
                       <span className="item-name">#{o.orderNumber}</span>
-                      <span className="item-sub" style={{marginLeft:8}}>{companyMap[o.companyID] || o.companyID}</span>
+                      <span className="item-sub" style={{marginLeft:8}}>{customerMap[o.customerID] || o.customerID}</span>
                     </div>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
                       {badge && <span className={`badge ${badge.cls}`}>{badge.label}</span>}
