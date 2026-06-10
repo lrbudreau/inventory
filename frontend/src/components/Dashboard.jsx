@@ -149,13 +149,7 @@ export default function Dashboard() {
         <div className="invoice-overlay">
           <div className="invoice-toolbar no-print">
             <button className="btn-secondary" onClick={() => { setShoppingListHTML(null); document.body.classList.remove("printing-overlay"); }}>← Back</button>
-            <button className="btn-primary" onClick={() => {
-              const win = window.open("", "_blank");
-              win.document.write(`<!DOCTYPE html><html><head><title>Shopping List</title><style>body{font-family:sans-serif;padding:24px;color:#111}table{width:100%;border-collapse:collapse}th{text-align:left;border-bottom:2px solid #333;padding:8px 12px;font-size:.8rem;text-transform:uppercase}td{padding:8px 12px;border-bottom:1px solid #eee}@media print{button{display:none}}</style></head><body>${shoppingListHTML}</body></html>`);
-              win.document.close();
-              win.focus();
-              setTimeout(() => win.print(), 500);
-            }}>🖨 Print</button>
+            <button className="btn-primary" onClick={() => window.print()}>🖨 Print</button>
           </div>
           <div className="invoice-body" dangerouslySetInnerHTML={{ __html: shoppingListHTML }} />
         </div>
