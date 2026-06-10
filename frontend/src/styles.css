@@ -1692,11 +1692,14 @@ textarea { resize: vertical; }
   .page-header,
   .order-meta,
   .card,
-  .result-msg {
+  .result-msg,
+  .dashboard,
+  .page,
+  .stats-row {
     display: none !important;
   }
 
-  /* Show invoice full page */
+  /* Show invoice/shopping list full page */
   body { background: #fff !important; }
 
   .main-content {
