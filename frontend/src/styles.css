@@ -1637,17 +1637,26 @@ textarea { resize: vertical; }
 
 /* ===================== IN-APP INVOICE VIEWER ===================== */
 .invoice-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   background: #fff;
-  z-index: 1000;
-  overflow-y: auto;
+  color: #111;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  color: #111;
+}
+
+/* When invoice is open, hide the app chrome */
+body.invoice-open .sidebar,
+body.invoice-open .mobile-header,
+body.invoice-open .mobile-bottom-nav,
+body.invoice-open .page,
+body.invoice-open .dashboard,
+body.invoice-open .stats-row {
+  display: none !important;
+}
+
+body.invoice-open .main-content {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .invoice-toolbar {
@@ -1664,15 +1673,8 @@ textarea { resize: vertical; }
   flex-shrink: 0;
 }
 
-.invoice-toolbar .btn-secondary {
-  background: #333;
-  border-color: #555;
-  color: #fff;
-}
-
-.invoice-toolbar .btn-primary {
-  background: #2d5a27;
-}
+.invoice-toolbar .btn-secondary { background: #333; border-color: #555; color: #fff; }
+.invoice-toolbar .btn-primary { background: #2d5a27; }
 
 .invoice-body {
   flex: 1;
@@ -1682,26 +1684,16 @@ textarea { resize: vertical; }
 }
 
 @media print {
-  /* Hide everything */
-  .app-shell { display: block !important; }
-  .sidebar { display: none !important; }
-  .main-content { margin: 0 !important; padding: 0 !important; display: block !important; }
-  .invoice-toolbar { display: none !important; }
-
-  /* Un-fix the overlay so it prints */
-  .invoice-overlay {
-    position: static !important;
-    height: auto !important;
-    overflow: visible !important;
-    z-index: auto !important;
+  .sidebar,
+  .mobile-header,
+  .mobile-bottom-nav,
+  .invoice-toolbar,
+  .page,
+  .dashboard,
+  .stats-row {
+    display: none !important;
   }
-
-  /* Hide everything in main-content except the invoice */
-  .page { display: none !important; }
-  .dashboard { display: none !important; }
-
-  .invoice-body {
-    padding: 0 !important;
-    color: #111 !important;
-  }
+  .main-content { margin: 0 !important; padding: 0 !important; }
+  .invoice-overlay { min-height: 0 !important; }
+  .invoice-body { padding: 0 !important; color: #111 !important; }
 }
