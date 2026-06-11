@@ -467,9 +467,6 @@ export default function Orders({ currentUser }) {
               <button className="modal-close" onClick={() => setScrapModal(null)}><CloseIcon /></button>
             </div>
             <div className="inline-form">
-              <p style={{fontSize:"0.9rem", color:"var(--text-muted)", marginBottom:12}}>
-                Scrapping <strong>{getProductName(scrapModal.productID)}</strong> — parts will be consumed from inventory.
-              </p>
               <div className="field">
                 <label>Quantity to Scrap</label>
                 <div className="qty-stepper" style={{justifyContent:"flex-start"}}>
