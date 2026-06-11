@@ -12,6 +12,7 @@ import ChangePassword from "./components/ChangePassword";
 import ActivityLog from "./components/ActivityLog";
 import MoreMenu from "./components/MoreMenu";
 import Settings from "./components/Settings";
+import Reports from "./components/Reports";
 import { saveSession, clearSession } from "./auth";
 import { ToastContainer } from "./components/Toast";
 import OfflineBar from "./components/OfflineBar";
@@ -25,6 +26,7 @@ const ADMIN_PRIMARY = [
 ];
 
 const ADMIN_MORE = [
+  { id: "reports",     label: "Reports",    icon: "⌗" },
   { id: "purchases",   label: "Purchases",  icon: "↑" },
   { id: "vendors",     label: "Vendors",    icon: "◫" },
   { id: "customers",   label: "Customers",  icon: "⊞" },
@@ -56,7 +58,7 @@ export default function App() {
  
   const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
-  const adminPages = ["purchases","vendors","customers","activitylog","users","settings"];
+  const adminPages = ["purchases","vendors","customers","activitylog","users","settings","reports"];
   const safePage = (!isAdmin && adminPages.includes(page)) ? "dashboard" : page;
  
   return (
@@ -120,6 +122,7 @@ export default function App() {
         {safePage === "activitylog" && isAdmin && <ActivityLog />}
         {safePage === "users"       && isAdmin && <Users currentUser={user} />}
         {safePage === "settings"    && isAdmin && <Settings />}
+        {safePage === "reports"     && isAdmin && <Reports />}
         {safePage === "password"    && <ChangePassword currentUser={user} />}
       </main>
     </div>
