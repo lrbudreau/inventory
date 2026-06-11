@@ -47,17 +47,17 @@ export default function App() {
     catch { return null; }
   });
   const [page, setPage] = useState("dashboard");
-
+ 
   function handleLogin(u) { saveSession(u); setUser(u); setPage("dashboard"); }
   function handleLogout() { clearSession(); setUser(null); setPage("dashboard"); }
-
+ 
   if (!user) return <Login onLogin={handleLogin} />;
-
+ 
   const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
   const adminPages = ["build","purchases","vendors","customers","activitylog","users","settings"];
   const safePage = (!isAdmin && adminPages.includes(page)) ? "dashboard" : page;
-
+ 
   return (
     <div className="app-shell">
       <ToastContainer />
@@ -99,7 +99,7 @@ export default function App() {
           <button className="btn-logout" onClick={handleLogout}>Sign Out</button>
         </div>
       </aside>
-
+ 
       <main className="main-content">
         <div className="mobile-header">
           <div className="mobile-brand"><span>⚙</span><span>FabTrack</span></div>
@@ -108,11 +108,11 @@ export default function App() {
             <button className="btn-logout" style={{width:"auto"}} onClick={handleLogout}>Out</button>
           </div>
         </div>
-
+ 
         {safePage === "dashboard"   && <Dashboard />}
         {safePage === "orders"      && <Orders currentUser={user} />}
         {safePage === "parts"       && <Parts readOnly={!isAdmin} />}
-        {safePage === "build"       && isAdmin && <Build />}
+        {safePage === "build"       && <Build currentUser={user} />}
         {safePage === "purchases"   && isAdmin && <Purchases currentUser={user} />}
         {safePage === "vendors"     && isAdmin && <Vendors />}
         {safePage === "customers"   && isAdmin && <Customers />}
