@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
+import { showToast } from "./Toast";
 
-export default function Build() {
+export default function Build({ currentUser }) {
   const [products, setProducts] = useState([]);
   const [parts, setParts] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -14,7 +15,8 @@ export default function Build() {
   const [partLines, setPartLines] = useState([{ partID: "", quantity: 1 }]);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [view, setView] = useState("list"); // "list" | "detail"
+  const [view, setView] = useState("list");
+  const [quickBuilding, setQuickBuilding] = useState(null);
 
   async function load() {
     const [pr, p] = await Promise.all([apiGet("products"), apiGet("parts")]);
@@ -44,6 +46,23 @@ export default function Build() {
       }
     }
     setEstimates(results);
+  }
+
+  async function handleQuickBuild(product, e) {
+    e.stopPropagation(); // Don't open the product detail
+    setQuickBuilding(product.id);
+    const res = await apiPost("quickBuild", {
+      productId: product.id,
+      userID: currentUser?.id,
+      username: currentUser?.username,
+    });
+    if (res?.success) {
+      showToast(`Built 1x ${product.name} → Order #${res.orderNumber}`);
+      await load();
+    } else {
+      showToast(res?.error || "Quick build failed.", "fail");
+    }
+    setQuickBuilding(null);
   }
 
   async function selectProduct(product) {
@@ -250,6 +269,14 @@ export default function Build() {
                     </div>
                   </button>
                   <div className="item-right">
+                    <button
+                      className="btn-quick-build"
+                      onClick={(e) => handleQuickBuild(p, e)}
+                      disabled={quickBuilding === p.id || estimates[p.id] === 0}
+                      title="Quick build — auto assigns to highest priority order"
+                    >
+                      {quickBuilding === p.id ? "…" : "⚡ Build"}
+                    </button>
                     <button className="btn-icon" onClick={() => openEdit(p)}><EditIcon /></button>
                     <button className="btn-icon" onClick={() => setConfirmDelete(p)}><DeleteIcon /></button>
                   </div>
