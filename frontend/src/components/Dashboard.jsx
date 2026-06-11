@@ -48,6 +48,8 @@ function BuildsChart({ purchases }) {
   );
 }
 
+function fmt(n) { return "$" + Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
@@ -55,11 +57,11 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [shoppingListHTML, setShoppingListHTML] = useState(null);
+  const [monthReport, setMonthReport] = useState(null);
 
   const load = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
 
-    // Single batch call instead of 5 separate calls
     const dash = await apiGet("dashboard");
     if (!dash) return;
 
@@ -77,6 +79,13 @@ export default function Dashboard() {
     const active = ordersData.filter(o => o.status !== "Complete");
     const allItems = await Promise.all(active.map(o => apiGet("orderProducts", { orderID: o.id })));
     setOrderItems(active.map((o, i) => ({ orderID: o.id, items: Array.isArray(allItems[i]) ? allItems[i] : [] })));
+
+    // Load this month's report summary
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+    const endDate = now.toISOString().slice(0,10);
+    const rep = await apiGet("reports", { startDate, endDate });
+    if (rep && !rep.error) setMonthReport(rep);
 
     setLoading(false);
     setRefreshing(false);
@@ -156,6 +165,12 @@ export default function Dashboard() {
     return da - db;
   });
 
+  const marginColor = (m) => {
+    if (m >= 40) return "var(--green)";
+    if (m >= 20) return "#f59e0b";
+    return "var(--danger)";
+  };
+
   return (
     <div>
       {shoppingListHTML && (
@@ -210,6 +225,41 @@ export default function Dashboard() {
           <span className="stat-label">Low Stock</span>
         </div>
       </div>
+
+      {/* This Month Profit Summary */}
+      {monthReport && monthReport.revenue > 0 && (
+        <div className="card" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:12}}>This Month's Performance</h2>
+          <div className="stats-row" style={{flexWrap:"wrap", gap:8}}>
+            <div className="stat-card" style={{flex:1, minWidth:100}}>
+              <span className="stat-num" style={{color:"var(--green)", fontSize:"1.1rem"}}>{fmt(monthReport.revenue)}</span>
+              <span className="stat-label">Revenue</span>
+            </div>
+            <div className="stat-card" style={{flex:1, minWidth:100}}>
+              <span className="stat-num" style={{fontSize:"1.1rem"}}>{fmt(monthReport.materialCost)}</span>
+              <span className="stat-label">Material Cost</span>
+            </div>
+            {monthReport.scrapCost > 0 && (
+              <div className="stat-card" style={{flex:1, minWidth:100}}>
+                <span className="stat-num" style={{color:"var(--danger)", fontSize:"1.1rem"}}>{fmt(monthReport.scrapCost)}</span>
+                <span className="stat-label">Scrap Cost</span>
+              </div>
+            )}
+            <div className="stat-card" style={{flex:1, minWidth:100}}>
+              <span className="stat-num" style={{color: monthReport.netProfit >= 0 ? "var(--green)" : "var(--danger)", fontSize:"1.1rem"}}>
+                {fmt(monthReport.netProfit)}
+              </span>
+              <span className="stat-label">Net Profit</span>
+            </div>
+            <div className="stat-card" style={{flex:1, minWidth:100}}>
+              <span className="stat-num" style={{color: marginColor(monthReport.margin), fontSize:"1.1rem"}}>
+                {monthReport.margin}%
+              </span>
+              <span className="stat-label">Margin</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overdue */}
       {overdueOrders.length > 0 && (
