@@ -338,12 +338,17 @@ export default function Orders({ currentUser }) {
       username: currentUser?.username,
     });
     if (res.success) {
-      setOrderItems(orderItems.map(i =>
+      const updatedItems = orderItems.map(i =>
         i.productID == scrapModal.productID
-          ? { ...i, scrapped: (i.scrapped || 0) + scrapQty }
+          ? { ...i, scrapped: (i.scrapped || 0) + scrapQty, built: Math.max(0, (i.built || 0) - scrapQty) }
           : i
-      ));
+      );
+      setOrderItems(updatedItems);
       showToast(`Scrapped ${scrapQty}x ${getProductName(scrapModal.productID)}`);
+      const allDone = updatedItems.every(i => i.built >= i.quantity);
+      if (!allDone && selected.status === "Complete") {
+        handleStatusChange("In Progress");
+      }
       setScrapModal(null);
       await load();
     } else {
