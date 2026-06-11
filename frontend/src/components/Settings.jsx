@@ -7,6 +7,7 @@ export default function Settings() {
     companyName: "",
     companyAddress: "",
     companyCity: "",
+    companyEmail: "",
     companyPhone: "",
     companyFax: "",
     companyWebsite: "",
@@ -24,6 +25,7 @@ export default function Settings() {
           companyName:    s.companyName    || "",
           companyAddress: s.companyAddress || "",
           companyCity:    s.companyCity    || "",
+          companyEmail:    s.companyEmail    || "",
           companyPhone:   s.companyPhone   || "",
           companyFax:     s.companyFax     || "",
           companyWebsite: s.companyWebsite || "",
@@ -81,6 +83,10 @@ export default function Settings() {
             <div className="field">
               <label>City, State ZIP</label>
               <input value={form.companyCity} onChange={f("companyCity")} placeholder="Indianapolis, IN 46202" />
+            </div>
+            <div className="field">
+              <label>Email</label>
+              <input value={form.companyEmail} onChange={f("companyEmail")} placeholder="customerservice@holschers.com" />
             </div>
             <div className="field">
               <label>Phone</label>
