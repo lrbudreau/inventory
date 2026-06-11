@@ -115,7 +115,7 @@ export default function Orders({ currentUser }) {
         }
       </style>
       <div class="header">
-        <img class="logo" src="https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center" alt="${settings.customerName || ''}" />
+        <img class="logo" src="${settings.companyLogo}" alt="${settings.customerName || ''}" />
         <div class="invoice-title">
           <h1>Invoice</h1>
           <div class="inv-num">${invoiceNum}</div>
