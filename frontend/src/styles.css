@@ -201,6 +201,17 @@ textarea { resize: vertical; }
 }
 .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
+.btn-scrap {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn-scrap:hover { background: var(--danger); color: #fff; }
+
 .error-msg {
   background: rgba(239,68,68,0.1);
   border: 1px solid var(--danger);
