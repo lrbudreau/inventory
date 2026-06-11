@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { apiGet, apiPost } from "../auth";
 import { EditIcon, DeleteIcon, CloseIcon } from "./Icons";
 import { showToast } from "./Toast";
@@ -12,11 +12,14 @@ export default function Build({ currentUser }) {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productName, setProductName] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [productMarkup, setProductMarkup] = useState("");
   const [partLines, setPartLines] = useState([{ partID: "", quantity: 1 }]);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [view, setView] = useState("list");
   const [quickBuilding, setQuickBuilding] = useState(null);
+  const [estimates, setEstimates] = useState({});
 
   async function load() {
     const [pr, p] = await Promise.all([apiGet("products"), apiGet("parts")]);
@@ -27,8 +30,6 @@ export default function Build({ currentUser }) {
   }
 
   useEffect(() => { load(); }, []);
-
-  const [estimates, setEstimates] = useState({});
 
   async function loadEstimates(productList, partsList) {
     const results = {};
@@ -48,8 +49,35 @@ export default function Build({ currentUser }) {
     setEstimates(results);
   }
 
+  // Calculate material cost from current partLines in the form
+  const materialCost = useMemo(() => {
+    return partLines.reduce((sum, line) => {
+      if (!line.partID) return sum;
+      const part = parts.find(p => p.id == line.partID);
+      return sum + (part ? Number(part.cost || 0) * Number(line.quantity || 1) : 0);
+    }, 0);
+  }, [partLines, parts]);
+
+  function handleMarkupChange(val) {
+    setProductMarkup(val);
+    const pct = parseFloat(val);
+    if (!isNaN(pct) && pct >= 0) {
+      setProductPrice((materialCost * (1 + pct / 100)).toFixed(2));
+    }
+  }
+
+  function handlePriceChange(val) {
+    setProductPrice(val);
+    const price = parseFloat(val);
+    if (!isNaN(price) && materialCost > 0) {
+      setProductMarkup(((price / materialCost - 1) * 100).toFixed(1));
+    } else {
+      setProductMarkup("");
+    }
+  }
+
   async function handleQuickBuild(product, e) {
-    e.stopPropagation(); // Don't open the product detail
+    e.stopPropagation();
     setQuickBuilding(product.id);
     const res = await apiPost("quickBuild", {
       productId: product.id,
@@ -85,6 +113,8 @@ export default function Build({ currentUser }) {
   function openNew() {
     setEditingProduct(null);
     setProductName("");
+    setProductPrice("");
+    setProductMarkup("");
     setPartLines([{ partID: "", quantity: 1 }]);
     setShowForm(true);
   }
@@ -92,7 +122,8 @@ export default function Build({ currentUser }) {
   async function openEdit(product) {
     setEditingProduct(product);
     setProductName(product.name);
-    // Load existing parts for this product
+    setProductPrice(product.price != null ? String(product.price) : "");
+    setProductMarkup("");
     const pp = await apiGet("productParts", { productID: product.id });
     const existing = Array.isArray(pp) ? pp : [];
     setPartLines(
@@ -114,50 +145,36 @@ export default function Build({ currentUser }) {
     setSaving(true);
 
     if (editingProduct) {
-      // Update product name
-      await apiPost("products/update", { id: editingProduct.id, name: productName });
-
-      // Delete old product parts by deleting and re-adding
-      // First delete all existing productParts for this product
+      await apiPost("products/update", { id: editingProduct.id, name: productName, price: Number(productPrice || 0) });
       const existing = await apiGet("productParts", { productID: editingProduct.id });
       if (Array.isArray(existing)) {
         for (const pp of existing) {
           await apiPost("productParts/delete", { productID: editingProduct.id, partID: pp.partID });
         }
       }
-      // Add new part lines
       for (const line of partLines) {
         if (line.partID) {
-          await apiPost("productParts/create", {
-            productID: editingProduct.id,
-            partID: line.partID,
-            quantity: Number(line.quantity)
-          });
+          await apiPost("productParts/create", { productID: editingProduct.id, partID: line.partID, quantity: Number(line.quantity) });
         }
       }
-      // Refresh detail view if we're looking at this product
       if (selected?.id === editingProduct.id) {
         const pp = await apiGet("productParts", { productID: editingProduct.id });
         setProductParts(Array.isArray(pp) ? pp : []);
-        setSelected({ ...selected, name: productName });
+        setSelected({ ...selected, name: productName, price: Number(productPrice || 0) });
       }
     } else {
-      // Create new product
-      const res = await apiPost("products/create", { name: productName });
+      const res = await apiPost("products/create", { name: productName, price: Number(productPrice || 0) });
       const newId = res.id;
       for (const line of partLines) {
         if (line.partID) {
-          await apiPost("productParts/create", {
-            productID: newId,
-            partID: line.partID,
-            quantity: Number(line.quantity)
-          });
+          await apiPost("productParts/create", { productID: newId, partID: line.partID, quantity: Number(line.quantity) });
         }
       }
     }
 
     setShowForm(false);
     setEditingProduct(null);
+    showToast(editingProduct ? "Product updated!" : "Product created!");
     await load();
     setSaving(false);
   }
@@ -166,10 +183,16 @@ export default function Build({ currentUser }) {
     setSaving(true);
     await apiPost("products/delete", { id: product.id });
     setConfirmDelete(null);
+    showToast("Product deleted.", "warn");
     if (selected?.id === product.id) { setSelected(null); setView("list"); }
     await load();
     setSaving(false);
   }
+
+  const profit = parseFloat(productPrice || 0) - materialCost;
+  const margin = parseFloat(productPrice || 0) > 0
+    ? ((profit / parseFloat(productPrice)) * 100).toFixed(1)
+    : null;
 
   return (
     <div className="page">
@@ -191,7 +214,6 @@ export default function Build({ currentUser }) {
         )}
       </div>
 
-      {/* Add/Edit Modal */}
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -204,20 +226,12 @@ export default function Build({ currentUser }) {
                 <label>Product Name</label>
                 <input value={productName} onChange={e => setProductName(e.target.value)} placeholder="e.g. Steel Chair" required />
               </div>
-              <div className="field">
-                <label>Sale Price (per unit)</label>
-                <input
-                  type="number" min="0" step="0.01"
-                  value={productPrice}
-                  onChange={e => setProductPrice(e.target.value)}
-                  placeholder="0.00"
-                />
-              </div>
+
               <div className="field">
                 <label>Parts Required</label>
                 {partLines.map((line, idx) => (
                   <div key={idx} className="part-line">
-                    <select value={line.partID} onChange={e => updatePartLine(idx, "partID", e.target.value)} required>
+                    <select value={line.partID} onChange={e => updatePartLine(idx, "partID", e.target.value)}>
                       <option value="">Select a part…</option>
                       {parts.map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
@@ -235,6 +249,82 @@ export default function Build({ currentUser }) {
                 ))}
                 <button type="button" className="btn-add-part" onClick={addPartLine}>+ Add Another Part</button>
               </div>
+
+              {/* Pricing section */}
+              <div className="field">
+                <label>Pricing</label>
+                <div style={{
+                  background:"var(--bg-card, #1a1a2e)", border:"1px solid var(--border)",
+                  borderRadius:8, padding:12, display:"flex", flexDirection:"column", gap:10
+                }}>
+                  {/* Break even row */}
+                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", paddingBottom:8, borderBottom:"1px solid var(--border)"}}>
+                    <span style={{fontSize:"0.8rem", color:"var(--text-muted)"}}>Material cost (break even)</span>
+                    <span style={{fontWeight:700, fontSize:"0.95rem", color: materialCost > 0 ? "var(--text)" : "var(--text-muted)"}}>
+                      {materialCost > 0 ? `$${materialCost.toFixed(2)}` : "—"}
+                    </span>
+                  </div>
+
+                  {/* Markup + Price row */}
+                  <div style={{display:"flex", gap:10, alignItems:"flex-end"}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:"0.72rem", color:"var(--text-muted)", marginBottom:4}}>Markup %</div>
+                      <div style={{display:"flex", alignItems:"center", gap:4}}>
+                        <input
+                          type="number" min="0" step="0.1"
+                          value={productMarkup}
+                          onChange={e => handleMarkupChange(e.target.value)}
+                          placeholder="e.g. 20"
+                          style={{width:"100%"}}
+                        />
+                        <span style={{color:"var(--text-muted)", fontSize:"0.9rem"}}>%</span>
+                      </div>
+                    </div>
+                    <div style={{color:"var(--text-muted)", paddingBottom:8, fontSize:"0.85rem"}}>or</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:"0.72rem", color:"var(--text-muted)", marginBottom:4}}>Sale Price</div>
+                      <div style={{display:"flex", alignItems:"center", gap:4}}>
+                        <span style={{color:"var(--text-muted)", fontSize:"0.9rem"}}>$</span>
+                        <input
+                          type="number" min="0" step="0.01"
+                          value={productPrice}
+                          onChange={e => handlePriceChange(e.target.value)}
+                          placeholder="0.00"
+                          style={{width:"100%"}}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live margin preview */}
+                  {parseFloat(productPrice) > 0 && (
+                    <div style={{
+                      display:"flex", justifyContent:"space-between", alignItems:"center",
+                      paddingTop:8, borderTop:"1px solid var(--border)"
+                    }}>
+                      <span style={{fontSize:"0.8rem", color:"var(--text-muted)"}}>Profit per unit</span>
+                      <div style={{textAlign:"right"}}>
+                        <span style={{
+                          fontWeight:700, fontSize:"0.95rem",
+                          color: profit >= 0 ? "var(--green, #4caf50)" : "var(--danger, #f44336)"
+                        }}>
+                          {profit >= 0 ? "+" : ""}${profit.toFixed(2)}
+                        </span>
+                        {margin !== null && (
+                          <span style={{
+                            marginLeft:8, fontSize:"0.8rem",
+                            color: parseFloat(margin) >= 20 ? "var(--green, #4caf50)"
+                              : parseFloat(margin) >= 0 ? "#f59e0b" : "var(--danger, #f44336)"
+                          }}>
+                            ({margin}% margin)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
                 <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
@@ -244,7 +334,6 @@ export default function Build({ currentUser }) {
         </div>
       )}
 
-      {/* Delete Confirmation */}
       {confirmDelete && (
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
@@ -258,7 +347,6 @@ export default function Build({ currentUser }) {
         </div>
       )}
 
-      {/* Product List */}
       {view === "list" && (
         <div className="card no-pad">
           {loading ? <p className="loading pad">Loading…</p> : (
@@ -269,6 +357,7 @@ export default function Build({ currentUser }) {
                     <div className="item-main">
                       <span className="item-name">{p.name}</span>
                       <span className="item-sub">
+                        {p.price > 0 ? `$${Number(p.price).toFixed(2)} · ` : ""}
                         {estimates[p.id] !== undefined
                           ? estimates[p.id] === 0
                             ? "⚠ Cannot build — parts low"
@@ -297,7 +386,6 @@ export default function Build({ currentUser }) {
         </div>
       )}
 
-      {/* Product Detail — parts list only, no build */}
       {view === "detail" && selected && (
         <div className="card no-pad">
           {productParts.length === 0 ? (
