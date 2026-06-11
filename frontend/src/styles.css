@@ -1704,3 +1704,23 @@ body.invoice-open .main-content {
   .invoice-overlay { min-height: 0 !important; }
   .invoice-body { padding: 0 !important; color: #111 !important; }
 }
+
+/* ===================== QUICK BUILD ===================== */
+.btn-quick-build {
+  background: rgba(245,158,11,0.15);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.btn-quick-build:hover { background: rgba(245,158,11,0.25); }
+.btn-quick-build:disabled { opacity: 0.4; cursor: not-allowed; }
