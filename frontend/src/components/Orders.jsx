@@ -128,6 +128,7 @@ export default function Orders({ currentUser }) {
           <div class="party-detail">
             ${settings.companyAddress ? settings.companyAddress + "<br>" : ""}
             ${settings.companyCity || ""}<br>
+            ${settings.companyEmail ? "Email: " + settings.companyEmail + "<br>" : ""}
             ${settings.companyPhone ? "Phone: " + settings.companyPhone + "<br>" : ""}
             ${settings.companyFax ? "Fax: " + settings.companyFax : ""}
           </div>
