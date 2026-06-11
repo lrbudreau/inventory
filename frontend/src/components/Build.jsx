@@ -205,6 +205,15 @@ export default function Build({ currentUser }) {
                 <input value={productName} onChange={e => setProductName(e.target.value)} placeholder="e.g. Steel Chair" required />
               </div>
               <div className="field">
+                <label>Sale Price (per unit)</label>
+                <input
+                  type="number" min="0" step="0.01"
+                  value={productPrice}
+                  onChange={e => setProductPrice(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="field">
                 <label>Parts Required</label>
                 {partLines.map((line, idx) => (
                   <div key={idx} className="part-line">
