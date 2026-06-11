@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../auth";
 import { formatPhone } from "../utils";
 
-const LOGO_URL = "https://cdn.shopify.com/oxygen-v2/30746/18450/38098/3736725/logo.png?width=300&crop=center";
-
 export default function Settings() {
   const [form, setForm] = useState({
     companyName: "",
@@ -12,6 +10,7 @@ export default function Settings() {
     companyPhone: "",
     companyFax: "",
     companyWebsite: "",
+    companyLogo: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,6 +27,7 @@ export default function Settings() {
           companyPhone:   s.companyPhone   || "",
           companyFax:     s.companyFax     || "",
           companyWebsite: s.companyWebsite || "",
+          companyLogo:    s.companyLogo    || "",
         });
       }
       setLoading(false);
@@ -59,8 +59,10 @@ export default function Settings() {
       {/* Logo Preview */}
       <div className="card settings-logo-card">
         <h2>Company Logo</h2>
-        <img src={LOGO_URL} alt="Holscher Products Inc" className="settings-logo" />
-        <p className="hint" style={{marginTop:8}}>Logo is used on printed invoices. To change it, update the URL in the source code.</p>
+        {form.companyLogo && (
+          <img src={form.companyLogo} alt="Company Logo" className="settings-logo" />
+        )}
+        <p className="hint" style={{marginTop:8}}>Used on printed invoices. Paste a public image URL below.</p>
       </div>
 
       {/* Company Info */}
@@ -91,6 +93,10 @@ export default function Settings() {
             <div className="field">
               <label>Website</label>
               <input type="url" value={form.companyWebsite} onChange={f("companyWebsite")} placeholder="https://holscherproducts.com" />
+            </div>
+            <div className="field">
+              <label>Logo URL</label>
+              <input value={form.companyLogo} onChange={f("companyLogo")} placeholder="https://..." />
             </div>
             {msg && <div className={`result-msg ${msg.ok ? "ok" : "fail"}`}>{msg.text}</div>}
             <button className="btn-primary" type="submit" disabled={saving}>
