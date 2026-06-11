@@ -38,9 +38,10 @@ const ADMIN_NAV = [...ADMIN_PRIMARY, ...ADMIN_MORE];
 const BASIC_NAV = [
   { id: "dashboard",  label: "Dashboard", icon: "◈" },
   { id: "orders",     label: "Orders",    icon: "▦" },
-  { id: "build",       label: "Products",   icon: "⚙" },
+  { id: "parts",      label: "Parts",     icon: "⬡" },
+  { id: "build",      label: "Products",  icon: "⚙" },
 ];
-
+ 
 export default function App() {
   const [user, setUser] = useState(() => {
     try { const s = localStorage.getItem("fabtrack_user"); return s ? JSON.parse(s) : null; }
@@ -55,7 +56,7 @@ export default function App() {
  
   const isAdmin = user.roleName === "admin" || user.roleID === "admin";
   const nav = isAdmin ? ADMIN_NAV : BASIC_NAV;
-  const adminPages = ["build","purchases","vendors","customers","activitylog","users","settings"];
+  const adminPages = ["purchases","vendors","customers","activitylog","users","settings"];
   const safePage = (!isAdmin && adminPages.includes(page)) ? "dashboard" : page;
  
   return (
